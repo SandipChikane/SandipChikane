@@ -1,156 +1,102 @@
-const navToggle = document.querySelector(".nav-toggle");
-const navMenu = document.querySelector(".nav-menu");
-const navLinks = document.querySelectorAll(".nav-menu a");
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalContent = document.getElementById('modalContent');
+const modalClose = document.getElementById('modalClose');
+const toast = document.getElementById('toast');
+let toastTimer;
 
-function closeMenu() {
-  navToggle?.setAttribute("aria-expanded", "false");
-  navToggle?.setAttribute("aria-label", "Open navigation menu");
-  navMenu?.classList.remove("open");
-  document.body.classList.remove("menu-open");
+function openModal(type, courseName = '') {
+  const templateId = `${type}ModalTemplate`;
+  const template = document.getElementById(templateId);
+  if (!template) return;
+  modalContent.replaceChildren(template.content.cloneNode(true));
+  modalContent.dataset.type = type;
+  const dynamicCourse = modalContent.querySelector('.dynamic-course');
+  if (dynamicCourse && courseName) dynamicCourse.textContent = courseName;
+  modalBackdrop.classList.add('show');
+  modalBackdrop.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => modalContent.querySelector('input')?.focus(), 100);
 }
-
-navToggle?.addEventListener("click", () => {
-  const isOpen = navToggle.getAttribute("aria-expanded") === "true";
-  navToggle.setAttribute("aria-expanded", String(!isOpen));
-  navToggle.setAttribute("aria-label", isOpen ? "Open navigation menu" : "Close navigation menu");
-  navMenu?.classList.toggle("open", !isOpen);
-  document.body.classList.toggle("menu-open", !isOpen);
-});
-
-navLinks.forEach((link) => link.addEventListener("click", closeMenu));
-
-window.addEventListener("resize", () => {
-  if (window.innerWidth > 980) closeMenu();
-});
-
-const revealItems = document.querySelectorAll(".reveal");
-const revealObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("visible");
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  },
-  { threshold: 0.12 },
-);
-
-revealItems.forEach((item) => revealObserver.observe(item));
-
-const filters = document.querySelectorAll(".filter");
-const jobCards = document.querySelectorAll(".job-card");
-
-filters.forEach((filter) => {
-  filter.addEventListener("click", () => {
-    const category = filter.dataset.filter;
-
-    filters.forEach((button) => {
-      const isActive = button === filter;
-      button.classList.toggle("active", isActive);
-      button.setAttribute("aria-pressed", String(isActive));
-    });
-
-    jobCards.forEach((card) => {
-      const matches = category === "all" || card.dataset.category === category;
-      card.classList.toggle("hidden", !matches);
-    });
-  });
-});
-
-const modal = document.querySelector("#role-modal");
-const modalTitle = document.querySelector("#modal-title");
-const modalCompany = document.querySelector("#modal-company");
-let lastFocusedElement = null;
 
 function closeModal() {
-  if (!modal) return;
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("modal-open");
-  lastFocusedElement?.focus();
+  modalBackdrop.classList.remove('show');
+  modalBackdrop.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
 }
 
-document.querySelectorAll(".job-action").forEach((button) => {
-  button.addEventListener("click", () => {
-    const card = button.closest(".job-card");
-    if (!card || !modal || !modalTitle || !modalCompany) return;
+function showToast(message, detail) {
+  toast.querySelector('strong').textContent = message;
+  toast.querySelector('small').textContent = detail;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 4200);
+}
 
-    lastFocusedElement = button;
-    modalTitle.textContent = card.querySelector("h3")?.textContent ?? "Opportunity";
-    modalCompany.textContent = card.querySelector(".company")?.textContent ?? "";
-    modal.classList.add("open");
-    modal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("modal-open");
-    modal.querySelector(".modal-close")?.focus();
-  });
-});
+document.addEventListener('click', (event) => {
+  const modalTrigger = event.target.closest('[data-open-modal]');
+  if (modalTrigger) openModal(modalTrigger.dataset.openModal);
 
-document.querySelectorAll("[data-close-modal]").forEach((element) => {
-  element.addEventListener("click", closeModal);
-});
+  const courseTrigger = event.target.closest('[data-course]');
+  if (courseTrigger) openModal('course', courseTrigger.dataset.course);
 
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    if (modal?.classList.contains("open")) closeModal();
-    else closeMenu();
+  const scrollTrigger = event.target.closest('[data-scroll]');
+  if (scrollTrigger) {
+    document.querySelector(scrollTrigger.dataset.scroll)?.scrollIntoView({ behavior: 'smooth' });
+    if (modalBackdrop.classList.contains('show')) closeModal();
   }
+
+  if (event.target === modalBackdrop || event.target === modalClose) closeModal();
 });
 
-const recruiterForm = document.querySelector("#recruiter-form");
-const formMessage = recruiterForm?.querySelector(".form-message");
-
-recruiterForm?.addEventListener("submit", (event) => {
+document.addEventListener('submit', (event) => {
+  if (!event.target.matches('.lead-form')) return;
   event.preventDefault();
-  const requiredFields = recruiterForm.querySelectorAll("[required]");
-  let firstInvalidField = null;
-
-  requiredFields.forEach((field) => {
-    const isValid = field.checkValidity();
-    field.setAttribute("aria-invalid", String(!isValid));
-    if (!isValid && !firstInvalidField) firstInvalidField = field;
-  });
-
-  if (firstInvalidField) {
-    if (formMessage) {
-      formMessage.textContent = "Please complete all fields with valid information.";
-      formMessage.classList.remove("success");
-    }
-    firstInvalidField.focus();
+  if (modalContent.dataset.type === 'login') {
+    const email = event.target.querySelector('input[type="email"]')?.value.trim();
+    if (email) localStorage.setItem('gradflowStudentEmail', email);
+    window.location.href = 'dashboard.html';
     return;
   }
-
-  if (formMessage) {
-    formMessage.textContent = "Thanks! Your enquiry is ready for the placement team.";
-    formMessage.classList.add("success");
-  }
-  recruiterForm.reset();
-  recruiterForm.querySelectorAll("[aria-invalid]").forEach((field) => {
-    field.removeAttribute("aria-invalid");
-  });
+  closeModal();
+  showToast('You’re on the list.', 'We’ll be in touch with the next steps.');
 });
 
-recruiterForm?.querySelectorAll("input, select").forEach((field) => {
-  field.addEventListener("input", () => {
-    if (field.checkValidity()) field.removeAttribute("aria-invalid");
-  });
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && modalBackdrop.classList.contains('show')) closeModal();
 });
 
-const sections = document.querySelectorAll("main section[id]");
-const sectionLinks = document.querySelectorAll('.nav-menu a[href^="#"]');
-const activeSectionObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      sectionLinks.forEach((link) => {
-        link.classList.toggle("active", link.getAttribute("href") === `#${entry.target.id}`);
-      });
+const filters = document.querySelectorAll('[data-filter]');
+filters.forEach((filter) => {
+  filter.addEventListener('click', () => {
+    const value = filter.dataset.filter;
+    document.querySelectorAll('.course-tabs button').forEach((button) => button.classList.toggle('active', button.dataset.filter === value));
+    document.querySelectorAll('.course-card').forEach((card) => {
+      card.style.display = value === 'all' || card.dataset.category === value ? '' : 'none';
     });
-  },
-  { rootMargin: "-25% 0px -65% 0px" },
-);
+  });
+});
 
-sections.forEach((section) => activeSectionObserver.observe(section));
+const menuToggle = document.getElementById('menuToggle');
+const header = document.querySelector('.site-header');
+menuToggle?.addEventListener('click', () => {
+  const isOpen = header.classList.toggle('menu-open');
+  menuToggle.setAttribute('aria-expanded', String(isOpen));
+});
 
-const year = document.querySelector("#year");
-if (year) year.textContent = String(new Date().getFullYear());
+document.querySelectorAll('.desktop-nav a').forEach((link) => {
+  link.addEventListener('click', () => {
+    header.classList.remove('menu-open');
+    menuToggle?.setAttribute('aria-expanded', 'false');
+  });
+});
+
+const storiesTrack = document.getElementById('storiesTrack');
+let storyPosition = 0;
+document.getElementById('nextStory')?.addEventListener('click', () => {
+  storyPosition = Math.min(storyPosition + 1, 2);
+  storiesTrack.style.transform = `translateX(-${storyPosition * 28}%)`;
+});
+document.getElementById('prevStory')?.addEventListener('click', () => {
+  storyPosition = Math.max(storyPosition - 1, 0);
+  storiesTrack.style.transform = `translateX(-${storyPosition * 28}%)`;
+});

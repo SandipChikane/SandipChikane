@@ -3,307 +3,193 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Training and Placement Office — connecting students, alumni, and leading employers."
-    />
-    <title>TPO Cell | Careers begin here</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23123f3b'/%3E%3Cpath d='m13 24 19-9 19 9-19 9-19-9Zm7 6v11c6 6 18 6 24 0V30' fill='none' stroke='%23dfff65' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E"
-    />
+    <meta name="theme-color" content="#081b18" />
+    <title>Gradflow — From campus to career</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
-    <script src="app.js" defer></script>
+    <link rel="stylesheet" href="mobile-nav-overrides.css" />
   </head>
   <body>
-    <a class="skip-link" href="#main-content">Skip to main content</a>
-    <header class="site-header" id="top">
-      <div class="utility-bar">
-        <div class="container utility-content">
-          <p>Training &amp; Placement Office</p>
-          <div class="utility-links">
-            <a href="mailto:placements@campus.edu">placements@campus.edu</a>
-            <span aria-hidden="true">•</span>
-            <a href="tel:+912012345678">+91 20 1234 5678</a>
-          </div>
-        </div>
-      </div>
-      <nav class="navbar container" aria-label="Primary navigation">
-        <a class="brand" href="#top" aria-label="TPO Cell home">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 48 48" role="img">
-              <path d="M7 15.5 24 7l17 8.5L24 24 7 15.5Z" />
-              <path d="M13 20v11c5 5.7 17 5.7 22 0V20" />
-              <path d="M41 17v12" />
-            </svg>
-          </span>
-          <span><strong>TPO</strong><small>CAREER CELL</small></span>
-        </a>
-        <button
-          class="nav-toggle"
-          type="button"
-          aria-expanded="false"
-          aria-controls="primary-menu"
-          aria-label="Open navigation menu"
-        >
-          <span></span><span></span><span></span>
-        </button>
-        <div class="nav-menu" id="primary-menu">
-          <a class="active" href="#top">Home</a>
-          <a href="#about">About</a>
-          <a href="#opportunities">Opportunities</a>
-          <a href="#process">Placement process</a>
-          <a href="#recruiters">Recruiters</a>
-          <a class="button button-small" href="#contact">Recruit from campus</a>
-        </div>
+    <div class="announcement">
+      <span class="pulse-dot"></span>
+      <span>Fresh cohort opens <strong>16 September</strong> · Early learners save 40%</span>
+      <a href="#courses">View courses <span>→</span></a>
+    </div>
+
+    <header class="site-header">
+      <a href="#top" class="brand" aria-label="Gradflow home">
+        <span class="brand-mark"><i></i><i></i><i></i></span>
+        <span>gradflow<span class="period">.</span></span>
+      </a>
+      <nav class="desktop-nav" aria-label="Main navigation">
+        <a href="#courses">Courses</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#outcomes">Outcomes</a>
+        <a href="#tpo">For TPOs</a>
       </nav>
+      <div class="header-actions">
+        <button class="text-button" data-open-modal="login">Sign in</button>
+        <button class="button button-dark button-sm" data-scroll="#courses">Explore courses <span>↗</span></button>
+        <button class="menu-button" id="menuToggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+      </div>
     </header>
 
-    <main id="main-content">
-      <section class="hero">
-        <div class="hero-pattern" aria-hidden="true"></div>
-        <div class="container hero-grid">
-          <div class="hero-copy reveal">
-            <span class="eyebrow light">YOUR FUTURE, IN MOTION</span>
-            <h1>Talent meets<br /><em>opportunity.</em></h1>
-            <p>
-              We prepare ambitious students for meaningful careers and help
-              leading organisations discover their next generation of talent.
-            </p>
-            <div class="hero-actions">
-              <a class="button button-light" href="#opportunities">
-                Explore opportunities
-                <span aria-hidden="true">↗</span>
-              </a>
-              <a class="text-link light-link" href="#process">
-                How placements work <span aria-hidden="true">→</span>
-              </a>
-            </div>
+    <main id="top">
+      <section class="hero section-wrap">
+        <div class="hero-copy reveal">
+          <div class="eyebrow"><span class="spark">✦</span> Career school for the real world</div>
+          <h1>Graduate with<br /><em>proof</em>, not just<br />a degree.</h1>
+          <p class="hero-lede">Tool-first programs, guided portfolio projects and a clear path from final semester to your first great role.</p>
+          <div class="hero-actions">
+            <button class="button button-lime" data-scroll="#courses">Find your course <span>→</span></button>
+            <button class="video-button" data-open-modal="demo"><span class="play-icon">▶</span> See how Gradflow works</button>
           </div>
-          <div class="hero-visual reveal" aria-label="Placement highlights">
-            <div class="student-card">
-              <div class="portrait" role="img" aria-label="Graduate starting her career">
-                <span class="portrait-shape shape-one"></span>
-                <span class="portrait-shape shape-two"></span>
-                <svg viewBox="0 0 320 390" aria-hidden="true">
-                  <circle cx="169" cy="107" r="48" fill="#d59b76" />
-                  <path d="M120 106c2-48 27-71 63-63 25 6 38 28 34 60-15-8-27-22-32-39-13 23-34 38-65 42Z" fill="#1e2d34" />
-                  <path d="M92 319c8-94 32-142 77-142 46 0 75 51 86 142H92Z" fill="#e9ff66" />
-                  <path d="m148 178 21 41 22-41" fill="#fff" />
-                  <path d="M169 219v100" stroke="#c6db54" stroke-width="3" />
-                </svg>
-              </div>
-              <div class="placement-tag">
-                <span class="tag-icon" aria-hidden="true">✓</span>
-                <span><strong>Placed!</strong><small>Graduate Engineer</small></span>
-              </div>
+          <div class="proof-row">
+            <div class="avatars" aria-label="Recent Gradflow students">
+              <span class="avatar av-1">S</span><span class="avatar av-2">K</span><span class="avatar av-3">A</span><span class="avatar av-4">R</span>
             </div>
-            <div class="stat-card">
-              <div class="stat-icon" aria-hidden="true">↗</div>
-              <strong>92%</strong>
-              <span>placement rate</span>
-              <small>Class of 2025</small>
-            </div>
-            <div class="orbit orbit-one" aria-hidden="true"></div>
-            <div class="orbit orbit-two" aria-hidden="true"></div>
+            <p><strong>4,200+ final-year students</strong><br />are building their next move</p>
           </div>
+        </div>
+
+        <div class="hero-visual reveal delay-1" aria-label="Gradflow student portfolio preview">
+          <div class="orbit orbit-1"></div><div class="orbit orbit-2"></div><div class="orbit orbit-3"></div>
+          <div class="hero-card portfolio-card">
+            <div class="card-top"><span class="mini-logo">gf.</span><span class="live-pill"><i></i> Portfolio ready</span></div>
+            <div class="profile-line"><span class="profile-avatar">AK</span><div><strong>Aarav Khanna</strong><small>Data Analyst · Cohort 08</small></div></div>
+            <div class="portfolio-graph"><span class="graph-label">SKILL MOMENTUM</span><svg viewBox="0 0 340 116" aria-hidden="true"><defs><linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#b9fa3d" stop-opacity=".5"/><stop offset="1" stop-color="#b9fa3d" stop-opacity="0"/></linearGradient></defs><path d="M0 98 C33 84, 45 90, 69 72 S115 70, 132 48 S179 73, 202 50 S248 46, 271 22 S315 28, 340 5 V116 H0Z" fill="url(#chartFill)"/><path d="M0 98 C33 84, 45 90, 69 72 S115 70, 132 48 S179 73, 202 50 S248 46, 271 22 S315 28, 340 5" fill="none" stroke="#ceff64" stroke-width="3"/><circle cx="271" cy="22" r="5" fill="#ceff64"/></svg><div class="months"><span>Week 1</span><span>Week 8</span><span>Week 16</span></div></div>
+            <div class="project-strip"><span class="project-icon">▦</span><div><strong>Retail Pulse Dashboard</strong><small>Power BI · Real client brief</small></div><span class="check">✓</span></div>
+          </div>
+          <div class="hero-card offer-card"><span class="offer-icon">✦</span><div><small>INTERVIEW INVITE</small><strong>You're on the shortlist.</strong><span>Product Analyst · Bangalore</span></div></div>
+          <div class="hero-card progress-card"><span class="ring"><b>78</b><small>%</small></span><div><small>CAREER READINESS</small><strong>Almost there, Aarav.</strong></div></div>
+          <div class="scribble scribble-top">not theory<br />only <span>↘</span></div>
+          <div class="scribble scribble-bottom">your work<br />speaks first <span>↗</span></div>
         </div>
       </section>
 
-      <section class="trust-strip" aria-label="Placement statistics">
-        <div class="container stat-grid reveal">
-          <div><strong data-count="92" data-suffix="%">92%</strong><span>Placement rate</span></div>
-          <div><strong data-count="180" data-suffix="+">180+</strong><span>Recruiting partners</span></div>
-          <div><strong data-count="24" data-prefix="₹" data-suffix=" LPA">₹24 LPA</strong><span>Highest package</span></div>
-          <div><strong data-count="1200" data-suffix="+">1,200+</strong><span>Offers last year</span></div>
+      <section class="trust-marquee">
+        <p>Built for students from campuses across India</p>
+        <div class="marquee-track"><span>VIT</span><i></i><span>MIT</span><i></i><span>SRM</span><i></i><span>Manipal</span><i></i><span>Amity</span><i></i><span>Christ</span><i></i><span>VIT</span><i></i><span>MIT</span><i></i><span>SRM</span><i></i></div>
+      </section>
+
+      <section class="intro section-wrap" id="how-it-works">
+        <div class="section-label"><span>01</span> THE GRADFLOW WAY</div>
+        <div class="intro-grid">
+          <h2>Less watching.<br />More <em>doing.</em></h2>
+          <div class="intro-copy"><p>The gap between college and a role is rarely talent. It’s knowing which tools matter, getting feedback while you build, and having work you can confidently show.</p><a href="#courses" class="arrow-link">Explore the learning experience <span>↘</span></a></div>
+        </div>
+        <div class="principles-grid">
+          <article><span class="principle-number">01</span><div class="principle-icon">⌘</div><h3>Tools that teams use</h3><p>Learn current, practical workflows—not outdated theory.</p></article>
+          <article><span class="principle-number">02</span><div class="principle-icon">✣</div><h3>Projects with a purpose</h3><p>Every project becomes a strong, explainable portfolio piece.</p></article>
+          <article><span class="principle-number">03</span><div class="principle-icon">↗</div><h3>Career momentum</h3><p>Get structured support from first lesson to first interview.</p></article>
         </div>
       </section>
 
-      <section class="section intro" id="about">
-        <div class="container split-layout">
-          <div class="section-heading reveal">
-            <span class="eyebrow">BUILT FOR THE NEXT STEP</span>
-            <h2>More than placements.<br />A career launchpad.</h2>
+      <section class="course-section" id="courses">
+        <div class="section-wrap">
+          <div class="course-heading"><div><div class="section-label light"><span>02</span> PICK YOUR PATH</div><h2>Build for the role<br />you <em>want.</em></h2></div><p>Focused learning paths shaped around the work companies are hiring for right now.</p></div>
+          <div class="course-tabs" role="tablist" aria-label="Course filters">
+            <button class="active" data-filter="all" role="tab">All paths <span>06</span></button>
+            <button data-filter="analytics" role="tab">Analytics</button><button data-filter="tech" role="tab">Technology</button><button data-filter="design" role="tab">Design</button>
           </div>
-          <div class="intro-copy reveal">
-            <p>
-              From the first aptitude session to the final offer letter, our
-              team supports every student with practical preparation,
-              industry exposure, and personal guidance.
-            </p>
-            <a class="text-link" href="#process">Meet the TPO team <span aria-hidden="true">→</span></a>
-          </div>
-        </div>
-        <div class="container service-grid">
-          <article class="service-card reveal">
-            <span class="service-number">01</span>
-            <div class="service-icon" aria-hidden="true">◎</div>
-            <h3>Career readiness</h3>
-            <p>Skill diagnostics, aptitude training, mock interviews, and role-specific preparation.</p>
-          </article>
-          <article class="service-card featured reveal">
-            <span class="service-number">02</span>
-            <div class="service-icon" aria-hidden="true">⌁</div>
-            <h3>Industry connect</h3>
-            <p>Expert sessions, live projects, internships, and meaningful connections with employers.</p>
-          </article>
-          <article class="service-card reveal">
-            <span class="service-number">03</span>
-            <div class="service-icon" aria-hidden="true">↗</div>
-            <h3>Placement support</h3>
-            <p>Transparent drives, one-to-one mentoring, offer guidance, and alumni career support.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="section opportunities" id="opportunities">
-        <div class="container">
-          <div class="section-title-row reveal">
-            <div>
-              <span class="eyebrow">LIVE OPPORTUNITIES</span>
-              <h2>Find your next move.</h2>
-            </div>
-            <a class="text-link desktop-link" href="#all-opportunities">View all opportunities <span aria-hidden="true">→</span></a>
-          </div>
-          <div class="filter-row" role="group" aria-label="Filter opportunities">
-            <button class="filter active" type="button" data-filter="all" aria-pressed="true">All roles</button>
-            <button class="filter" type="button" data-filter="placement" aria-pressed="false">Placements</button>
-            <button class="filter" type="button" data-filter="internship" aria-pressed="false">Internships</button>
-          </div>
-          <div class="jobs-grid" id="all-opportunities">
-            <article class="job-card reveal" data-category="placement">
-              <div class="job-top">
-                <div class="company-logo indigo">N</div>
-                <span class="job-type">Full time</span>
-              </div>
-              <p class="company">NEXORA TECHNOLOGIES</p>
-              <h3>Graduate Software Engineer</h3>
-              <div class="job-meta"><span>⌖ Pune</span><span>₹8–12 LPA</span></div>
-              <div class="job-bottom"><span>Closes 18 Sep</span><button type="button" class="job-action" aria-label="View Graduate Software Engineer role">↗</button></div>
+          <div class="course-grid">
+            <article class="course-card featured" data-category="analytics">
+              <div class="course-visual visual-analytics"><span class="course-tag">MOST LOVED</span><span class="visual-symbol">▥</span><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i></div></div>
+              <div class="course-body"><div class="course-meta"><span>ANALYTICS</span><span>16 WEEKS</span></div><h3>Data Analytics<br />in the Wild</h3><p>Turn messy data into decisions people act on.</p><div class="course-footer"><div class="tool-badges"><span>Excel</span><span>SQL</span><span>Power BI</span></div><button class="round-arrow" data-course="Data Analytics in the Wild" aria-label="Learn about Data Analytics in the Wild">↗</button></div></div>
             </article>
-            <article class="job-card reveal" data-category="internship">
-              <div class="job-top">
-                <div class="company-logo coral">A</div>
-                <span class="job-type">Internship</span>
-              </div>
-              <p class="company">ALTURA CONSULTING</p>
-              <h3>Business Analyst Intern</h3>
-              <div class="job-meta"><span>⌖ Mumbai</span><span>₹30k / month</span></div>
-              <div class="job-bottom"><span>Closes 22 Sep</span><button type="button" class="job-action" aria-label="View Business Analyst Intern role">↗</button></div>
+            <article class="course-card" data-category="tech">
+              <div class="course-visual visual-dev"><span class="visual-code">&lt;/&gt;</span><span class="code-window"><i></i><i></i><i></i><b>build()</b><em>ship it.</em></span></div>
+              <div class="course-body"><div class="course-meta"><span>TECHNOLOGY</span><span>14 WEEKS</span></div><h3>Modern Web<br />Development</h3><p>Design, build and deploy products that work.</p><div class="course-footer"><div class="tool-badges"><span>React</span><span>Git</span><span>AI</span></div><button class="round-arrow" data-course="Modern Web Development" aria-label="Learn about Modern Web Development">↗</button></div></div>
             </article>
-            <article class="job-card reveal" data-category="placement">
-              <div class="job-top">
-                <div class="company-logo lime">O</div>
-                <span class="job-type">Full time</span>
-              </div>
-              <p class="company">ORBIT FINANCIAL</p>
-              <h3>Management Trainee</h3>
-              <div class="job-meta"><span>⌖ Bengaluru</span><span>₹10–14 LPA</span></div>
-              <div class="job-bottom"><span>Closes 25 Sep</span><button type="button" class="job-action" aria-label="View Management Trainee role">↗</button></div>
+            <article class="course-card" data-category="design">
+              <div class="course-visual visual-design"><div class="design-shape shape-a"></div><div class="design-shape shape-b"></div><div class="design-shape shape-c"></div><span>UX</span></div>
+              <div class="course-body"><div class="course-meta"><span>DESIGN</span><span>12 WEEKS</span></div><h3>Product Design<br />Foundations</h3><p>Go from user insight to a case study with impact.</p><div class="course-footer"><div class="tool-badges"><span>Figma</span><span>Notion</span></div><button class="round-arrow" data-course="Product Design Foundations" aria-label="Learn about Product Design Foundations">↗</button></div></div>
+            </article>
+            <article class="course-card compact-card" data-category="analytics">
+              <div class="compact-icon">◎</div><div><div class="course-meta"><span>ANALYTICS</span><span>10 WEEKS</span></div><h3>Business Analytics</h3><p>Make sharper decisions with data.</p></div><button class="round-arrow" data-course="Business Analytics" aria-label="Learn about Business Analytics">↗</button>
+            </article>
+            <article class="course-card compact-card" data-category="tech">
+              <div class="compact-icon purple">✦</div><div><div class="course-meta"><span>TECHNOLOGY</span><span>12 WEEKS</span></div><h3>AI for Work</h3><p>Use AI as a thoughtful co-pilot.</p></div><button class="round-arrow" data-course="AI for Work" aria-label="Learn about AI for Work">↗</button>
             </article>
           </div>
-          <a class="text-link mobile-link" href="#all-opportunities">View all opportunities <span aria-hidden="true">→</span></a>
+          <button class="see-all" data-filter="all">See all learning paths <span>→</span></button>
         </div>
       </section>
 
-      <section class="section process" id="process">
-        <div class="container process-grid">
-          <div class="process-intro reveal">
-            <span class="eyebrow light">A SIMPLE PATH FORWARD</span>
-            <h2>Your journey,<br />clearly mapped.</h2>
-            <p>We keep the placement process transparent so you can focus on showing up at your best.</p>
-            <a class="button button-light" href="#contact">Get placement ready <span aria-hidden="true">→</span></a>
+      <section class="project-showcase section-wrap">
+        <div class="section-label"><span>03</span> NOT ANOTHER CERTIFICATE</div>
+        <div class="showcase-header"><h2>Make work<br />worth <em>showing.</em></h2><p>You’ll finish with a portfolio that gives recruiters a reason to pause—and a story you’re proud to tell.</p></div>
+        <div class="project-layout">
+          <div class="project-browser">
+            <div class="browser-top"><span></span><span></span><span></span><div>portfolio.gradflow.in/riya</div></div>
+            <div class="browser-content"><div class="browser-nav"><strong>Riya<span>.</span></strong><small>PRODUCT THINKER</small><button>Get in touch ↗</button></div><div class="browser-hero"><p>Hi, I’m Riya. I turn complex problems into <em>simple digital experiences.</em></p><div class="browser-project-card"><span>01 · CASE STUDY</span><strong>Making student finances less intimidating.</strong><div class="card-art"><i></i><i></i><i></i></div></div></div></div>
           </div>
-          <ol class="steps">
-            <li class="reveal"><span>01</span><div><h3>Build your profile</h3><p>Complete your student profile, upload your résumé, and tell us where you want to go.</p></div></li>
-            <li class="reveal"><span>02</span><div><h3>Prepare with purpose</h3><p>Attend assessments, workshops, and personalised sessions based on your target roles.</p></div></li>
-            <li class="reveal"><span>03</span><div><h3>Apply &amp; interview</h3><p>Discover matching opportunities, register for drives, and move through each stage confidently.</p></div></li>
-            <li class="reveal"><span>04</span><div><h3>Launch your career</h3><p>Accept your offer and step into the workplace with continued support from our alumni network.</p></div></li>
-          </ol>
+          <aside class="project-notes"><div class="note-rule"></div><p class="annotation">A living portfolio, created one project at a time.</p><div class="project-stats"><div><strong>06</strong><span>portfolio projects</span></div><div><strong>4.8<span>/5</span></strong><span>average mentor feedback</span></div></div><button class="button button-outline" data-open-modal="demo">Preview a student portfolio <span>↗</span></button></aside>
         </div>
       </section>
 
-      <section class="section recruiters" id="recruiters">
-        <div class="container center-heading reveal">
-          <span class="eyebrow">TRUSTED BY LEADING TEAMS</span>
-          <h2>Where our students go next.</h2>
-          <p>Our employer network spans technology, consulting, manufacturing, finance, and emerging industries.</p>
+      <section class="outcomes-section" id="outcomes">
+        <div class="section-wrap outcome-grid">
+          <div><div class="section-label light"><span>04</span> OUTCOMES THAT COUNT</div><h2>Ready when<br />opportunity<br /><em>knocks.</em></h2></div>
+          <div class="outcome-content"><p>Gradflow students leave with practical confidence: real work, a clearer career direction, and stories that make an interview feel less scary.</p><div class="outcome-numbers"><div><strong>86<span>%</span></strong><small>say they feel career-ready<br />after their pathway</small></div><div><strong>4.8<span>/5</span></strong><small>average project review<br />from industry mentors</small></div><div><strong>3×</strong><small>more likely to finish<br />a portfolio project</small></div></div><a href="#stories" class="arrow-link light-link">Meet the graduates <span>↗</span></a></div>
         </div>
-        <div class="logo-marquee" aria-label="Recruiting partners">
-          <div class="logo-track">
-            <span>accenture</span><span>Infosys</span><span>TATA</span><span>Capgemini</span><span>cognizant</span><span>Mahindra</span>
-            <span aria-hidden="true">accenture</span><span aria-hidden="true">Infosys</span><span aria-hidden="true">TATA</span><span aria-hidden="true">Capgemini</span><span aria-hidden="true">cognizant</span><span aria-hidden="true">Mahindra</span>
+      </section>
+
+      <section class="stories-section section-wrap" id="stories">
+        <div class="stories-heading"><div><div class="section-label"><span>05</span> THEIR NEXT CHAPTER</div><h2>They built the<br /><em>bridge.</em></h2></div><div class="slider-controls"><button id="prevStory" aria-label="Previous story">←</button><button id="nextStory" aria-label="Next story">→</button></div></div>
+        <div class="stories-track" id="storiesTrack">
+          <article class="story-card story-main"><div class="quote-mark">“</div><blockquote>Gradflow made me stop saying ‘I only know the basics.’ I had actual work to talk about in every interview.</blockquote><div class="story-person"><span class="person-photo person-rhea">RG</span><div><strong>Rhea Gupta</strong><small>Junior Data Analyst, InMobi</small></div><span class="story-course">DATA ANALYTICS</span></div></article>
+          <article class="story-card"><div class="story-color teal"></div><blockquote>My portfolio became the thing that got me replies. I had something specific to show, not just a list of skills.</blockquote><div class="story-person"><span class="person-photo person-karthik">KR</span><div><strong>Karthik Rao</strong><small>Frontend Developer, Mintlify</small></div></div></article>
+          <article class="story-card"><div class="story-color coral"></div><blockquote>I learned how to explain the ‘why’ behind my designs. That changed every conversation I had with recruiters.</blockquote><div class="story-person"><span class="person-photo person-ananya">AN</span><div><strong>Ananya Nair</strong><small>UX Associate, Jio</small></div></div></article>
+        </div>
+      </section>
+
+      <section class="tpo-section" id="tpo">
+        <div class="section-wrap tpo-grid">
+          <div class="tpo-copy"><div class="eyebrow"><span class="spark">✦</span> Built alongside your placement cell</div><h2>See your cohort<br />move <em>forward.</em></h2><p>Give students a practical edge, while your TPO team gets a clear, privacy-first view of engagement, project progress and career readiness.</p><ul class="check-list"><li><span>✓</span> Free TPO workspace, always</li><li><span>✓</span> No student payment data, ever</li><li><span>✓</span> Monthly progress summaries</li></ul><button class="button button-lime" data-open-modal="tpo">Get your TPO workspace <span>→</span></button></div>
+          <div class="tpo-dashboard">
+            <div class="dash-top"><div><small>GOOD MORNING,</small><strong>VIT Vellore · TPO</strong></div><span class="dash-avatar">TP</span></div>
+            <div class="dash-title"><div><h3>Cohort overview</h3><small>September 2026</small></div><span class="report-pill">↓ Download report</span></div>
+            <div class="dash-kpis"><div><small>ENROLLED</small><strong>248</strong><span class="up">↑ 18 this month</span></div><div><small>ACTIVE THIS WEEK</small><strong>82<span>%</span></strong><span class="up">↑ 6.4% vs last week</span></div></div>
+            <div class="dash-chart"><div><div><small>LEARNING MOMENTUM</small><strong>Student activity</strong></div><div class="chart-key"><span></span> Active learners</div></div><svg viewBox="0 0 450 155" preserveAspectRatio="none" aria-label="Student activity chart"><line x1="0" y1="130" x2="450" y2="130"/><line x1="0" y1="88" x2="450" y2="88"/><line x1="0" y1="46" x2="450" y2="46"/><path d="M0 119 C35 106 38 110 70 101 S103 82 128 91 S167 93 192 68 S222 77 251 58 S290 64 321 34 S354 50 379 28 S417 32 450 9" fill="none" stroke="#b8fa44" stroke-width="3"/><circle cx="450" cy="9" r="5" fill="#b8fa44"/></svg><div class="chart-labels"><span>Week 1</span><span>Week 4</span><span>Week 8</span><span>Week 12</span></div></div>
+            <div class="dash-bottom"><div><span class="mini-progress green">81%</span><small>submitted<br />a project</small></div><div><span class="mini-progress orange">64%</span><small>career profile<br />complete</small></div><button data-open-modal="tpo">View workspace ↗</button></div>
           </div>
         </div>
       </section>
 
-      <section class="section contact-section" id="contact">
-        <div class="container contact-panel reveal">
-          <div class="contact-copy">
-            <span class="eyebrow light">PARTNER WITH US</span>
-            <h2>Meet talent ready<br />to make an impact.</h2>
-            <p>Share your hiring needs and our placement team will respond within two working days.</p>
-            <div class="contact-detail"><span aria-hidden="true">✦</span><div><small>PLACEMENT HELPLINE</small><a href="tel:+912012345678">+91 20 1234 5678</a></div></div>
-          </div>
-          <form class="contact-form" id="recruiter-form" novalidate>
-            <div class="field-pair">
-              <label>Full name<input type="text" name="name" autocomplete="name" placeholder="Your name" required /></label>
-              <label>Work email<input type="email" name="email" autocomplete="email" placeholder="you@company.com" required /></label>
-            </div>
-            <label>Organisation<input type="text" name="company" autocomplete="organization" placeholder="Company name" required /></label>
-            <label>How can we help?
-              <select name="interest" required>
-                <option value="">Choose an option</option>
-                <option>Campus recruitment</option>
-                <option>Internship programme</option>
-                <option>Industry partnership</option>
-                <option>Guest session</option>
-              </select>
-            </label>
-            <button class="button button-accent" type="submit">Start a conversation <span aria-hidden="true">→</span></button>
-            <p class="form-message" role="status" aria-live="polite"></p>
-          </form>
+      <section class="faq-section section-wrap">
+        <div class="faq-heading"><div class="section-label"><span>06</span> GOOD QUESTIONS</div><h2>A little more<br /><em>clarity.</em></h2></div>
+        <div class="faq-list">
+          <details open><summary>Who are Gradflow courses for?<span>+</span></summary><p>Gradflow is designed for final-year students and recent graduates who want to move from learning to doing. You don’t need prior experience—just curiosity and the commitment to build.</p></details>
+          <details><summary>How are the courses taught?<span>+</span></summary><p>Each pathway combines short tool lessons, guided project sprints, feedback from practitioners and career-ready templates you can keep using.</p></details>
+          <details><summary>Will I get a certificate?<span>+</span></summary><p>Yes. More importantly, you’ll have a verified project portfolio and completion record that shows what you learned and built.</p></details>
+          <details><summary>What does the TPO workspace include?<span>+</span></summary><p>TPOs get a free cohort view of enrollment, active learning, project submissions and career-readiness trends. Student payment details are never visible.</p></details>
         </div>
       </section>
+
+      <section class="cta-section section-wrap"><div class="cta-card"><span class="cta-spark">✦</span><div><p>YOUR CAREER, IN MOTION</p><h2>You’re closer than<br />you <em>think.</em></h2></div><button class="button button-lime" data-scroll="#courses">Start building today <span>→</span></button><div class="cta-lines"></div></div></section>
     </main>
 
     <footer>
-      <div class="container footer-grid">
-        <div class="footer-brand">
-          <a class="brand brand-light" href="#top">
-            <span class="brand-mark" aria-hidden="true">
-              <svg viewBox="0 0 48 48"><path d="M7 15.5 24 7l17 8.5L24 24 7 15.5Z" /><path d="M13 20v11c5 5.7 17 5.7 22 0V20" /></svg>
-            </span>
-            <span><strong>TPO</strong><small>CAREER CELL</small></span>
-          </a>
-          <p>Preparing people. Creating possibilities.</p>
-        </div>
-        <div><h3>Students</h3><a href="#opportunities">Opportunities</a><a href="#process">Placement process</a><a href="#about">Career support</a></div>
-        <div><h3>Employers</h3><a href="#contact">Recruit from campus</a><a href="#recruiters">Our network</a><a href="#contact">Contact TPO</a></div>
-        <div><h3>Stay connected</h3><a href="mailto:placements@campus.edu">placements@campus.edu</a><a href="#top">LinkedIn ↗</a><a href="#top">Instagram ↗</a></div>
-      </div>
-      <div class="container footer-bottom">
-        <p>© <span id="year"></span> TPO Career Cell. All rights reserved.</p>
-        <a href="#top">Back to top ↑</a>
-      </div>
+      <div class="section-wrap footer-grid"><div><a href="#top" class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>gradflow<span class="period">.</span></span></a><p>From campus to career,<br />with proof.</p></div><div class="footer-links"><div><strong>EXPLORE</strong><a href="#courses">Learning paths</a><a href="#how-it-works">How it works</a><a href="#stories">Student stories</a></div><div><strong>FOR PARTNERS</strong><a href="#tpo">For TPOs</a><a href="#tpo">Campus partnerships</a><a href="mailto:hello@gradflow.in">Talk to us</a></div><div><strong>FOLLOW</strong><a href="#top">LinkedIn ↗</a><a href="#top">Instagram ↗</a><a href="#top">YouTube ↗</a></div></div></div>
+      <div class="section-wrap footer-bottom"><span>© 2026 Gradflow Learning Pvt. Ltd.</span><div><a href="#top">Privacy</a><a href="#top">Terms</a></div><span>Made for the next move <i>✦</i></span></div>
     </footer>
 
-    <div class="role-modal" id="role-modal" aria-hidden="true">
-      <div class="modal-backdrop" data-close-modal></div>
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <button class="modal-close" type="button" aria-label="Close role details" data-close-modal>×</button>
-        <span class="eyebrow">OPPORTUNITY DETAILS</span>
-        <h2 id="modal-title">Role title</h2>
-        <p id="modal-company"></p>
-        <p>Sign in to the student placement portal to review eligibility, the complete job description, and register for this drive.</p>
-        <a class="button" href="#contact" data-close-modal>Contact the TPO team <span aria-hidden="true">→</span></a>
-      </div>
+    <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+        <div id="modalContent"></div>
+      </section>
     </div>
+
+    <template id="courseModalTemplate"><div class="modal-eyebrow">LEARNING PATH</div><h2 id="modalTitle">Make this your<br /><em>starting point.</em></h2><p class="modal-description">Get the complete syllabus, project list and next cohort details for <strong class="dynamic-course">this pathway</strong>.</p><form class="lead-form"><label>Your name<input type="text" required placeholder="What should we call you?" /></label><label>College email<input type="email" required placeholder="you@college.edu" /></label><button class="button button-lime" type="submit">Send me the details <span>→</span></button></form><small class="form-note">No spam. Just the course details and cohort updates.</small></template>
+    <template id="tpoModalTemplate"><div class="modal-eyebrow">FOR TRAINING &amp; PLACEMENT OFFICERS</div><h2 id="modalTitle">Your students’<br /><em>momentum</em>, visible.</h2><p class="modal-description">Request your free TPO workspace and get a guided onboarding for your campus.</p><form class="lead-form"><label>Your name<input type="text" required placeholder="Name" /></label><label>Official email<input type="email" required placeholder="name@college.edu" /></label><label>College name<input type="text" required placeholder="Your institution" /></label><button class="button button-dark" type="submit">Request workspace <span>→</span></button></form></template>
+    <template id="loginModalTemplate"><div class="modal-eyebrow">WELCOME BACK</div><h2 id="modalTitle">Your next step is<br /><em>waiting.</em></h2><p class="modal-description">Sign in to continue building your portfolio and career profile.</p><form class="lead-form"><label>Email address<input type="email" required placeholder="you@example.com" /></label><button class="button button-dark" type="submit">Continue with email <span>→</span></button></form><small class="form-note">Prototype interaction only — account login will be connected to your backend.</small></template>
+    <template id="demoModalTemplate"><div class="modal-eyebrow">A LOOK INSIDE</div><h2 id="modalTitle">Learning that ends<br />in <em>evidence.</em></h2><div class="demo-window"><div><span></span><span></span><span></span></div><strong>PROJECT SPRINT #03</strong><p>Build a project with a real brief, structured checkpoints and useful feedback.</p><div class="demo-check"><span>✓</span> Your work, ready to show</div></div><button class="button button-lime full-button" data-scroll="#courses">Explore pathways <span>→</span></button></template>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><div><strong>You’re on the list.</strong><small>We’ll be in touch with the next steps.</small></div></div>
+    <script src="app.js"></script>
   </body>
 </html>
