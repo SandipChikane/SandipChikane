@@ -122,10 +122,10 @@ function renderProgress(rows) {
   rows.forEach((student) => {
     const card = document.createElement('button');
     card.type = 'button';
-    card.className = 'progress-card';
+    card.className = 'tpo-progress-card';
     card.dataset.studentId = student.id;
     card.innerHTML = `
-      <div class="progress-card-top">
+      <div class="tpo-progress-card-top">
         <div class="tpo-student">
           <span class="tpo-avatar ${student.tone}">${student.initials}</span>
           <span><h3>${student.name}</h3><p>${student.path}</p></span>

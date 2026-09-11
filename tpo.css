@@ -226,7 +226,9 @@
   gap: 12px;
 }
 
-.progress-card {
+.tpo-progress-card {
+  display: block;
+  position: relative;
   background: var(--dash-card);
   border: 1px solid var(--dash-line);
   padding: 18px;
@@ -235,14 +237,15 @@
   font: inherit;
   color: inherit;
   width: 100%;
+  transform: none;
 }
 
-.progress-card:hover {
+.tpo-progress-card:hover {
   border-color: #9bb0a7;
   transform: translateY(-2px);
 }
 
-.progress-card-top {
+.tpo-progress-card-top {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -250,13 +253,13 @@
   margin-bottom: 16px;
 }
 
-.progress-card h3 {
+.tpo-progress-card h3 {
   font-size: 16px;
   letter-spacing: -0.4px;
   margin: 0 0 3px;
 }
 
-.progress-card p {
+.tpo-progress-card p {
   margin: 0;
   font-size: 11px;
   color: #66776f;
@@ -271,19 +274,19 @@
   color: #5c6f67;
 }
 
-.progress-card .progress-label {
+.tpo-progress-card .progress-label {
   display: flex;
   justify-content: space-between;
   margin-bottom: 7px;
 }
 
-.progress-card .progress-label span {
+.tpo-progress-card .progress-label span {
   font: 8px var(--dash-mono);
   color: #71817a;
   letter-spacing: 0.08em;
 }
 
-.progress-card .progress-label strong {
+.tpo-progress-card .progress-label strong {
   font: 10px var(--dash-mono);
   color: var(--dash-ink);
   font-weight: 500;
