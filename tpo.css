@@ -1,0 +1,369 @@
+.tpo-body .welcome-row h1 {
+  font-size: clamp(36px, 4vw, 46px);
+}
+
+.privacy-card {
+  background: #fbf2d8;
+  border: 1px solid #ecd6a7;
+  padding: 13px 15px;
+  display: grid;
+  grid-template-columns: 27px auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 220px;
+}
+
+.privacy-card strong,
+.privacy-card small {
+  display: block;
+}
+
+.privacy-card strong {
+  font-size: 12px;
+}
+
+.privacy-card small {
+  font-size: 9px;
+  color: #88765e;
+}
+
+.tpo-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.tpo-kpi-grid article {
+  background: var(--dash-card);
+  border: 1px solid var(--dash-line);
+  padding: 18px 16px;
+}
+
+.tpo-kpi-grid small {
+  font: 8px var(--dash-mono);
+  letter-spacing: 0.08em;
+  color: #71817a;
+  display: block;
+}
+
+.tpo-kpi-grid strong {
+  display: block;
+  font-size: 32px;
+  letter-spacing: -1.6px;
+  line-height: 1;
+  margin: 10px 0 7px;
+}
+
+.tpo-kpi-grid span {
+  font-size: 11px;
+  color: #66776f;
+}
+
+.tpo-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+
+.tpo-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tpo-chip {
+  border: 1px solid var(--dash-line);
+  background: transparent;
+  color: #4d615a;
+  font: 11px var(--dash-sans);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.tpo-chip.active,
+.tpo-chip:hover {
+  background: var(--dash-dark);
+  color: white;
+  border-color: var(--dash-dark);
+}
+
+.tpo-selects {
+  display: flex;
+  gap: 12px;
+}
+
+.tpo-selects label {
+  display: grid;
+  gap: 5px;
+  font: 8px var(--dash-mono);
+  letter-spacing: 0.08em;
+  color: #71817a;
+  text-transform: uppercase;
+}
+
+.tpo-selects select {
+  min-width: 160px;
+  height: 36px;
+  border: 1px solid var(--dash-line);
+  background: var(--dash-card);
+  color: var(--dash-ink);
+  font: 12px var(--dash-sans);
+  padding: 0 10px;
+}
+
+.tpo-panel {
+  margin-bottom: 52px;
+}
+
+.tpo-count {
+  font: 11px var(--dash-mono);
+  color: #66776f;
+  margin: 0;
+}
+
+.tpo-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--dash-line);
+  background: var(--dash-card);
+}
+
+.tpo-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.tpo-table th,
+.tpo-table td {
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--dash-line);
+}
+
+.tpo-table th {
+  font: 8px var(--dash-mono);
+  letter-spacing: 0.08em;
+  color: #71817a;
+  text-transform: uppercase;
+  background: #f3f2eb;
+}
+
+.tpo-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.tpo-table tbody tr {
+  cursor: pointer;
+}
+
+.tpo-table tbody tr:hover {
+  background: #f7f6ef;
+}
+
+.tpo-student {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tpo-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 10px var(--dash-mono);
+  color: #3c2119;
+  background: #e9a082;
+  flex: 0 0 32px;
+}
+
+.tpo-avatar.teal { background: #b6ca8c; }
+.tpo-avatar.lilac { background: #bfabe3; }
+.tpo-avatar.gold { background: #eddc76; }
+.tpo-avatar.mint { background: #cbe6d8; }
+
+.tpo-student strong,
+.tpo-student small {
+  display: block;
+}
+
+.tpo-student strong {
+  font-size: 13px;
+}
+
+.tpo-student small {
+  font-size: 10px;
+  color: #6d7f78;
+}
+
+.tpo-status {
+  display: inline-block;
+  font: 8px var(--dash-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 7px;
+}
+
+.tpo-status.active { background: #d8ead4; color: #21563d; }
+.tpo-status.at-risk { background: #fcd9cf; color: #8c4333; }
+.tpo-status.completed { background: #e4f0b8; color: #4a6118; }
+.tpo-status.invited { background: #ecece4; color: #5d6d66; }
+
+.tpo-empty {
+  margin: 18px 16px;
+  color: #66776f;
+  font-size: 13px;
+}
+
+.progress-board {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.progress-card {
+  background: var(--dash-card);
+  border: 1px solid var(--dash-line);
+  padding: 18px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+}
+
+.progress-card:hover {
+  border-color: #9bb0a7;
+  transform: translateY(-2px);
+}
+
+.progress-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.progress-card h3 {
+  font-size: 16px;
+  letter-spacing: -0.4px;
+  margin: 0 0 3px;
+}
+
+.progress-card p {
+  margin: 0;
+  font-size: 11px;
+  color: #66776f;
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: #5c6f67;
+}
+
+.progress-card .progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.progress-card .progress-label span {
+  font: 8px var(--dash-mono);
+  color: #71817a;
+  letter-spacing: 0.08em;
+}
+
+.progress-card .progress-label strong {
+  font: 10px var(--dash-mono);
+  color: var(--dash-ink);
+  font-weight: 500;
+}
+
+.tpo-bar {
+  height: 6px;
+  background: #e3e7e0;
+}
+
+.tpo-bar i {
+  display: block;
+  height: 100%;
+  background: #7aa816;
+}
+
+.tpo-bar.risk i { background: #e97450; }
+
+.tpo-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 18px 0 8px;
+}
+
+.tpo-detail-grid div {
+  background: #eeeee7;
+  padding: 12px;
+}
+
+.tpo-detail-grid small {
+  font: 8px var(--dash-mono);
+  letter-spacing: 0.08em;
+  color: #71817a;
+  display: block;
+}
+
+.tpo-detail-grid strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.tpo-note {
+  font-size: 12px;
+  color: #66776f;
+}
+
+@media (max-width: 1000px) {
+  .tpo-kpi-grid,
+  .progress-board {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .privacy-card {
+    margin-top: 22px;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .tpo-kpi-grid,
+  .progress-board,
+  .tpo-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tpo-toolbar,
+  .tpo-selects {
+    display: grid;
+    width: 100%;
+  }
+
+  .tpo-selects select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .tpo-table {
+    min-width: 620px;
+  }
+}

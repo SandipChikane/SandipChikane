@@ -6,7 +6,7 @@ A responsive, frontend-only course portal concept for final-year students and Tr
 
 - Course discovery with path filters and course-interest flow
 - Portfolio and student-success storytelling
-- Free, privacy-first TPO dashboard preview and workspace request flow
+- Free, privacy-first TPO workspace with college-scoped enrollment and student progress
 - FAQ, mobile navigation, accessible dialogs, and responsive layouts
 
 ## Run locally

@@ -57,6 +57,16 @@ document.addEventListener('submit', (event) => {
     window.location.href = 'dashboard.html';
     return;
   }
+  if (modalContent.dataset.type === 'tpo') {
+    const name = event.target.querySelector('[name="name"]')?.value.trim();
+    const email = event.target.querySelector('[name="email"]')?.value.trim();
+    const college = event.target.querySelector('[name="college"]')?.value.trim();
+    if (name) localStorage.setItem('gradflowTpoName', name);
+    if (email) localStorage.setItem('gradflowTpoEmail', email);
+    if (college) localStorage.setItem('gradflowTpoCollege', college);
+    window.location.href = 'tpo.html';
+    return;
+  }
   closeModal();
   showToast('You’re on the list.', 'We’ll be in touch with the next steps.');
 });
