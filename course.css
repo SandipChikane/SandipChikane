@@ -13,6 +13,12 @@
   padding: 48px 34px 96px;
 }
 
+.course-lock[hidden],
+.course-open[hidden],
+.course-missing[hidden] {
+  display: none !important;
+}
+
 .course-missing {
   font-size: 16px;
   color: #51645e;
