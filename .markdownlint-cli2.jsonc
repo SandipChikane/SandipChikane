@@ -1,0 +1,15 @@
+{
+  // Rules for authoring the GitHub profile README.
+  // See https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+  "config": {
+    "default": true,
+    // GitHub renders long lines fine; profile READMEs often use long badge/link lines.
+    "MD013": false,
+    // Allow inline HTML, which profile READMEs rely on (images, alignment, badges).
+    "MD033": false,
+    // The first line does not need to be a top-level heading.
+    "MD041": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules"]
+}

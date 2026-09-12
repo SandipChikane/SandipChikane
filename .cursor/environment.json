@@ -1,0 +1,16 @@
+{
+  "name": "SandipChikane Profile",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "preview",
+      "command": "npm run preview"
+    }
+  ],
+  "ports": [
+    {
+      "name": "README preview",
+      "port": 3000
+    }
+  ]
+}
