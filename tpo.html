@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08231e" />
+    <title>TPO workspace — Gradflow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="tpo.css" />
+  </head>
+  <body class="dashboard-body tpo-body">
+    <aside class="dash-sidebar">
+      <a href="index.html" class="brand dash-brand" aria-label="Gradflow home"><span class="brand-mark"><i></i><i></i><i></i></span><span>gradflow<span class="period">.</span></span></a>
+      <nav class="dash-nav" aria-label="TPO workspace navigation">
+        <a class="active" href="#overview"><span>▦</span> Overview</a>
+        <a href="#enrollment"><span>▤</span> Enrollment</a>
+        <a href="#progress"><span>↗</span> Progress</a>
+      </nav>
+      <div class="side-progress">
+        <span class="side-ring"><b id="sideReady">81</b><small>%</small></span>
+        <div><small>COLLEGE READINESS</small><strong id="sideCollege">VIT Vellore</strong></div>
+      </div>
+      <div class="side-bottom">
+        <button id="helpButton" type="button"><span>?</span> Need a hand?</button>
+        <a href="index.html"><span>←</span> Back to Gradflow</a>
+      </div>
+    </aside>
+
+    <main class="dash-main" id="overview">
+      <header class="dash-header">
+        <button class="dash-menu" id="dashMenu" type="button" aria-label="Open navigation"><span></span><span></span></button>
+        <div class="search-box">
+          <span>⌕</span>
+          <input id="studentSearch" type="search" aria-label="Search students from your college" placeholder="Search students from your college" />
+        </div>
+        <div class="dash-actions">
+          <button class="notification" id="noticeButton" type="button" aria-label="Notifications">♢<i></i></button>
+          <div class="student-chip">
+            <span class="student-avatar" id="tpoInitials">TP</span>
+            <span class="student-name" id="tpoName">Campus TPO</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="dash-content">
+        <section class="welcome-row">
+          <div>
+            <p class="dashboard-eyebrow"><span>✦</span> TRAINING &amp; PLACEMENT OFFICE</p>
+            <h1>Your college,<br /><em id="collegeHeading">in view.</em></h1>
+            <p class="welcome-copy">Enrollment and progress for students from <strong id="collegeLock">VIT Vellore</strong> only. Payment details are never shown.</p>
+          </div>
+          <div class="privacy-card">
+            <span class="flame">✦</span>
+            <div>
+              <strong>College-scoped view</strong>
+              <small>Other campuses stay hidden</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="tpo-kpi-grid" aria-label="College placement summary">
+          <article><small>ENROLLED</small><strong id="kpiEnrolled">0</strong><span id="kpiEnrolledHint">From your college</span></article>
+          <article><small>ACTIVE THIS WEEK</small><strong id="kpiActive">0</strong><span id="kpiActiveHint">Learning now</span></article>
+          <article><small>AVG. PROGRESS</small><strong id="kpiProgress">0%</strong><span id="kpiProgressHint">Across enrolled paths</span></article>
+          <article><small>AT RISK</small><strong id="kpiRisk">0</strong><span id="kpiRiskHint">Need a follow-up</span></article>
+        </section>
+
+        <section class="tpo-toolbar" aria-label="Filter your college cohort">
+          <div class="tpo-chips" role="group" aria-label="Learning path">
+            <button type="button" class="tpo-chip active" data-path="all">All paths</button>
+            <button type="button" class="tpo-chip" data-path="analytics">Analytics</button>
+            <button type="button" class="tpo-chip" data-path="tech">Technology</button>
+            <button type="button" class="tpo-chip" data-path="design">Design</button>
+          </div>
+          <div class="tpo-selects">
+            <label>Department
+              <select id="departmentFilter">
+                <option value="all">All departments</option>
+                <option value="CSE">CSE</option>
+                <option value="IT">IT</option>
+                <option value="ECE">ECE</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="MBA">MBA</option>
+              </select>
+            </label>
+            <label>Status
+              <select id="statusFilter">
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="at-risk">At risk</option>
+                <option value="completed">Completed</option>
+                <option value="invited">Invited</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="tpo-panel" id="enrollment">
+          <div class="section-title-row">
+            <div>
+              <p class="mini-eyebrow">ENROLLMENT</p>
+              <h2>Who joined from <em>your campus.</em></h2>
+            </div>
+            <p class="tpo-count" id="enrollmentCount" aria-live="polite">0 students</p>
+          </div>
+          <div class="tpo-table-wrap">
+            <table class="tpo-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Department</th>
+                  <th>Path</th>
+                  <th>Enrolled</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="enrollmentBody"></tbody>
+            </table>
+            <p class="tpo-empty" id="enrollmentEmpty" hidden>No students from this college match these filters.</p>
+          </div>
+        </section>
+
+        <section class="tpo-panel" id="progress">
+          <div class="section-title-row">
+            <div>
+              <p class="mini-eyebrow">PROGRESS</p>
+              <h2>How your cohort is <em>moving.</em></h2>
+            </div>
+            <button class="view-all-btn" id="downloadReport" type="button">↓ Download report</button>
+          </div>
+          <div class="progress-board" id="progressBoard"></div>
+          <p class="tpo-empty" id="progressEmpty" hidden>No progress records for this college filter.</p>
+        </section>
+      </div>
+    </main>
+
+    <div class="dashboard-modal" id="tpoModal" aria-hidden="true">
+      <section role="dialog" aria-modal="true" aria-labelledby="tpoModalTitle">
+        <button id="tpoModalClose" type="button" aria-label="Close">×</button>
+        <div id="tpoModalContent"></div>
+      </section>
+    </div>
+    <div class="toast dash-toast" id="tpoToast" role="status" aria-live="polite">
+      <span>✓</span>
+      <div><strong>Workspace ready.</strong><small>Your college cohort is in view.</small></div>
+    </div>
+    <script src="tpo.js"></script>
+  </body>
+</html>
