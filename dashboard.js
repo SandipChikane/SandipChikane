@@ -3,11 +3,28 @@ const modalContent = document.getElementById('dashboardModalContent');
 const modalClose = document.getElementById('dashboardModalClose');
 const toast = document.getElementById('dashToast');
 const studentName = document.getElementById('studentFirstName');
-const savedEmail = localStorage.getItem('gradflowStudentEmail');
+const savedEmail = window.GradflowEnrollment.getStudentEmail();
+const ANALYTICS_COURSE = 'data-analytics';
 
 if (savedEmail) {
   const first = savedEmail.split('@')[0].split(/[._-]/)[0];
   if (first) studentName.textContent = first.charAt(0).toUpperCase() + first.slice(1) + '.';
+}
+
+function analyticsUnlocked() {
+  return window.GradflowEnrollment.isEnrolled(ANALYTICS_COURSE);
+}
+
+function goToCourse(courseId) {
+  window.location.href = window.GradflowEnrollment.courseUrl(courseId);
+}
+
+function requireAnalytics(openUnlocked) {
+  if (!analyticsUnlocked()) {
+    goToCourse(ANALYTICS_COURSE);
+    return;
+  }
+  openUnlocked();
 }
 
 function showToast(title, detail) {
@@ -39,8 +56,8 @@ function resumeLearning() {
   });
 }
 
-document.getElementById('continueButton').addEventListener('click', resumeLearning);
-document.getElementById('resumeLesson').addEventListener('click', resumeLearning);
+document.getElementById('continueButton').addEventListener('click', () => requireAnalytics(resumeLearning));
+document.getElementById('resumeLesson').addEventListener('click', () => requireAnalytics(resumeLearning));
 
 document.querySelectorAll('.task-list input').forEach((input) => {
   input.addEventListener('change', () => {
@@ -58,6 +75,10 @@ document.getElementById('clearTasks').addEventListener('click', () => {
 
 document.querySelectorAll('.open-project').forEach((button) => {
   button.addEventListener('click', () => {
+    if (!analyticsUnlocked()) {
+      goToCourse(ANALYTICS_COURSE);
+      return;
+    }
     const project = button.dataset.project;
     openModal(`<p class="mini-eyebrow">PROJECT WORKSPACE</p><h2>${project}<br /><em>is ready.</em></h2><p>Open your project brief, see the next milestone and add your work when you’re ready. Your feedback history will stay attached to this project.</p><button class="button button-dark" id="projectOpen">Open workspace <span>↗</span></button>`);
     document.getElementById('projectOpen').addEventListener('click', () => { closeModal(); showToast('Workspace opened.', `Welcome back to ${project}.`); });
@@ -65,6 +86,10 @@ document.querySelectorAll('.open-project').forEach((button) => {
 });
 
 function newProject() {
+  if (!analyticsUnlocked()) {
+    goToCourse(ANALYTICS_COURSE);
+    return;
+  }
   openModal(`<p class="mini-eyebrow">GUIDED PROJECTS</p><h2>Choose your next<br /><em>challenge.</em></h2><p>Pick a real-world brief to add to your portfolio. Your mentor will help you focus it into a clear case study.</p><button class="button button-lime" id="browseBriefs">Browse project briefs <span>→</span></button>`);
   document.getElementById('browseBriefs').addEventListener('click', () => { closeModal(); showToast('Project briefs unlocked.', 'Three recommended briefs were added to your workspace.'); });
 }
@@ -86,3 +111,29 @@ const dashMenu = document.getElementById('dashMenu');
 const sidebar = document.querySelector('.dash-sidebar');
 dashMenu.addEventListener('click', () => sidebar.classList.toggle('open'));
 document.querySelectorAll('.dash-nav a').forEach((link) => link.addEventListener('click', () => sidebar.classList.remove('open')));
+
+(function syncCourseAccess() {
+  const unlocked = analyticsUnlocked();
+  const banner = document.getElementById('learning');
+  const lesson = document.getElementById('lessonCard');
+  const continueButton = document.getElementById('continueButton');
+  banner.classList.toggle('is-locked', !unlocked);
+  lesson.classList.toggle('is-locked', !unlocked);
+  document.getElementById('learningBadge').textContent = unlocked ? 'KEEP YOUR MOMENTUM' : 'COURSE LOCKED';
+  document.getElementById('learningCopy').textContent = unlocked
+    ? 'Module 6 of 8 · Turning numbers into a compelling story'
+    : `Pay ${window.GradflowEnrollment.formatPrice(window.GradflowEnrollment.courseById(ANALYTICS_COURSE).price)} and enroll to open lessons.`;
+  continueButton.innerHTML = unlocked ? 'Continue learning <span>→</span>' : 'Pay and enroll to unlock <span>→</span>';
+  document.getElementById('resumeLesson').innerHTML = unlocked ? 'Resume sprint <span>→</span>' : 'Unlock this lesson <span>→</span>';
+
+  const list = document.getElementById('courseAccessList');
+  list.replaceChildren();
+  window.GradflowEnrollment.catalog.forEach((course) => {
+    const enrolled = window.GradflowEnrollment.isEnrolled(course.id);
+    const link = document.createElement('a');
+    link.className = 'dash-course-link';
+    link.href = window.GradflowEnrollment.courseUrl(course.id);
+    link.innerHTML = `<span><strong>${course.name}</strong><small>${enrolled ? 'Paid and enrolled — open content' : `${window.GradflowEnrollment.formatPrice(course.price)} · locked until you enroll`}</small></span><span class="access-pill ${enrolled ? 'enrolled' : 'locked'}">${enrolled ? 'Enrolled' : 'Locked'}</span>`;
+    list.appendChild(link);
+  });
+}());

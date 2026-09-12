@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="course.css" />
   </head>
   <body class="dashboard-body">
     <aside class="dash-sidebar">
@@ -41,8 +42,18 @@
         </section>
 
         <section class="momentum-banner" id="learning">
-          <div class="banner-top"><div><span class="badge">KEEP YOUR MOMENTUM</span><h2>Data Analytics in the Wild</h2><p>Module 6 of 8 · Turning numbers into a compelling story</p></div><span class="course-orb">▥</span></div>
+          <div class="banner-top"><div><span class="badge" id="learningBadge">KEEP YOUR MOMENTUM</span><h2>Data Analytics in the Wild</h2><p id="learningCopy">Module 6 of 8 · Turning numbers into a compelling story</p></div><span class="course-orb">▥</span></div>
           <div class="banner-bottom"><div class="wide-progress"><div class="progress-label"><span>YOUR PROGRESS</span><strong><b id="courseProgress">67</b>% complete</strong></div><div class="track"><i id="progressBar"></i></div></div><button class="button button-lime" id="continueButton">Continue learning <span>→</span></button></div>
+        </section>
+        <section class="course-access-block" id="courseAccess">
+          <div class="section-title-row">
+            <div>
+              <p class="mini-eyebrow">COURSE ACCESS</p>
+              <h2>Pay to unlock a path.</h2>
+            </div>
+          </div>
+          <p class="dash-locked-note">Lesson content stays locked until you pay and enroll. TPOs can see progress, never payment details.</p>
+          <div class="dash-course-list" id="courseAccessList"></div>
         </section>
 
         <section class="dash-grid">
@@ -74,6 +85,7 @@
 
     <div class="dashboard-modal" id="dashboardModal" aria-hidden="true"><section role="dialog" aria-modal="true" aria-labelledby="dashboardModalTitle"><button id="dashboardModalClose" aria-label="Close">×</button><div id="dashboardModalContent"></div></section></div>
     <div class="toast dash-toast" id="dashToast" role="status" aria-live="polite"><span>✓</span><div><strong>Progress saved.</strong><small>Your learning space is up to date.</small></div></div>
+    <script src="enrollment.js"></script>
     <script src="dashboard.js"></script>
   </body>
 </html>

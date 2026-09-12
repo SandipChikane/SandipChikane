@@ -36,8 +36,16 @@ document.addEventListener('click', (event) => {
   const modalTrigger = event.target.closest('[data-open-modal]');
   if (modalTrigger) openModal(modalTrigger.dataset.openModal);
 
-  const courseTrigger = event.target.closest('[data-course]');
-  if (courseTrigger) openModal('course', courseTrigger.dataset.course);
+  const courseTrigger = event.target.closest('[data-course-id], [data-course]');
+  if (courseTrigger) {
+    const course = window.GradflowEnrollment.courseById(courseTrigger.dataset.courseId)
+      || window.GradflowEnrollment.courseByName(courseTrigger.dataset.course);
+    if (course) {
+      window.location.href = window.GradflowEnrollment.courseUrl(course.id);
+      return;
+    }
+    openModal('course', courseTrigger.dataset.course);
+  }
 
   const scrollTrigger = event.target.closest('[data-scroll]');
   if (scrollTrigger) {
@@ -53,7 +61,7 @@ document.addEventListener('submit', (event) => {
   event.preventDefault();
   if (modalContent.dataset.type === 'login') {
     const email = event.target.querySelector('input[type="email"]')?.value.trim();
-    if (email) localStorage.setItem('gradflowStudentEmail', email);
+    if (email) window.GradflowEnrollment.setStudentEmail(email);
     window.location.href = 'dashboard.html';
     return;
   }
@@ -109,4 +117,13 @@ document.getElementById('nextStory')?.addEventListener('click', () => {
 document.getElementById('prevStory')?.addEventListener('click', () => {
   storyPosition = Math.max(storyPosition - 1, 0);
   storiesTrack.style.transform = `translateX(-${storyPosition * 28}%)`;
+});
+
+document.querySelectorAll('[data-access-for]').forEach((row) => {
+  const enrolled = window.GradflowEnrollment.isEnrolled(row.dataset.accessFor);
+  const pill = row.querySelector('.access-pill');
+  if (!pill) return;
+  pill.classList.toggle('locked', !enrolled);
+  pill.classList.toggle('enrolled', enrolled);
+  pill.textContent = enrolled ? 'Enrolled' : 'Locked';
 });

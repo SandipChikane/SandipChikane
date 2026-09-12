@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#081b18" />
+    <title>Course — Gradflow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="course.css" />
+  </head>
+  <body class="course-page">
+    <header class="site-header course-header">
+      <a href="index.html" class="brand" aria-label="Gradflow home">
+        <span class="brand-mark"><i></i><i></i><i></i></span>
+        <span>gradflow<span class="period">.</span></span>
+      </a>
+      <nav class="desktop-nav" aria-label="Course navigation">
+        <a href="index.html#courses">All courses</a>
+        <a href="dashboard.html">Learning space</a>
+      </nav>
+      <a class="button button-dark button-sm" href="index.html#courses">Back to courses <span>←</span></a>
+    </header>
+
+    <main class="course-main">
+      <p class="course-missing" id="missingState" hidden>This learning path could not be found. <a href="index.html#courses">Browse courses</a></p>
+
+      <section class="course-lock" id="lockedState" hidden>
+        <div class="course-lock-copy">
+          <div class="eyebrow"><span class="spark">✦</span> Course locked</div>
+          <h1 id="lockedTitle">This path is locked.</h1>
+          <p id="lockedBlurb">Pay and enroll to open the lessons, project brief, and mentor space for this course.</p>
+          <ul class="check-list">
+            <li><span>✓</span> Full module list and current sprint</li>
+            <li><span>✓</span> Guided project you can show recruiters</li>
+            <li><span>✓</span> Access stays saved on this device after payment</li>
+          </ul>
+        </div>
+        <form class="course-pay-card" id="enrollForm">
+          <p class="mini-kicker">PAY AND ENROLL</p>
+          <strong class="course-price-lg" id="lockedPrice">₹0</strong>
+          <p class="course-pay-note" id="lockedMeta">One-time course fee</p>
+          <label>College email
+            <input id="enrollEmail" type="email" name="email" required placeholder="you@college.edu" autocomplete="email" />
+          </label>
+          <button class="button button-lime full-button" id="payButton" type="submit">Pay and enroll <span>→</span></button>
+          <small class="form-note">Prototype payment only. Enrollment is saved locally. Card details are never stored, and TPOs never see payment data.</small>
+        </form>
+      </section>
+
+      <section class="course-open" id="unlockedState" hidden>
+        <div class="course-open-hero">
+          <div>
+            <div class="eyebrow"><span class="spark">✦</span> You’re enrolled</div>
+            <h1 id="openTitle">Welcome back.</h1>
+            <p id="openBlurb">Your lessons, project, and progress are ready.</p>
+            <div class="hero-actions">
+              <button class="button button-lime" id="startContent" type="button">Open current lesson <span>→</span></button>
+              <a class="arrow-link" href="dashboard.html">Go to learning space <span>↗</span></a>
+            </div>
+          </div>
+          <aside class="enrolled-chip">
+            <small>ACCESS</small>
+            <strong>Paid and enrolled</strong>
+            <span id="enrolledOn">Saved on this device</span>
+          </aside>
+        </div>
+        <div class="course-open-grid">
+          <section>
+            <p class="mini-kicker">SYLLABUS</p>
+            <h2>What you’ll <em>build.</em></h2>
+            <ol class="module-list" id="moduleList"></ol>
+          </section>
+          <article class="current-lesson" id="currentLesson">
+            <p class="mini-kicker" id="lessonType">LESSON</p>
+            <h2 id="lessonTitle">Current lesson</h2>
+            <p id="lessonCopy"></p>
+            <p class="lesson-time" id="lessonTime"></p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="courseToast" role="status" aria-live="polite">
+      <span>✓</span>
+      <div><strong>You’re enrolled.</strong><small>This course is unlocked on this device.</small></div>
+    </div>
+    <script src="enrollment.js"></script>
+    <script src="course.js"></script>
+  </body>
+</html>

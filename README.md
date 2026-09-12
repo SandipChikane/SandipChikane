@@ -4,10 +4,11 @@ A responsive, frontend-only course portal concept for final-year students and Tr
 
 ## Included
 
-- Course discovery with path filters and course-interest flow
+- Course discovery with path filters and payment-gated course access
 - Portfolio and student-success storytelling
 - Free, privacy-first TPO workspace with college-scoped enrollment and student progress
 - FAQ, mobile navigation, accessible dialogs, and responsive layouts
+- Student enrollment stored in `localStorage` (`gradflowEnrollments`), with no payment details in TPO views
 
 ## Run locally
 
