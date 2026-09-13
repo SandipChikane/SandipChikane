@@ -126,7 +126,7 @@ function setAuthForms({ session, hasAccount, email }) {
   const setPassword = document.getElementById('dashSetPasswordForm');
   if (signIn) signIn.hidden = Boolean(session);
   if (setPassword) {
-    setPassword.hidden = !session;
+    setPassword.hidden = !session || hasAccount;
     const copy = document.getElementById('dashSetPasswordCopy');
     if (copy) {
       copy.textContent = hasAccount
