@@ -461,11 +461,21 @@ describe('referral authorization', () => {
     const api = createHandlers({ env: ENV, store, fetch: async () => new Response('[]') });
     const denied = await api.referralMe({ headers: {} });
     assert.equal(denied.status, 401);
-    const own = await api.referralMe(studentReq('a@college.edu'), { origin: 'http://127.0.0.1:4174' });
+    const own = await api.referralMe(studentReq('a@college.edu'), { origin: 'https://evil.example' });
     assert.equal(own.status, 200);
     assert.equal(own.body.code, 'ALICE7K92');
+    assert.equal(own.body.link, 'http://127.0.0.1:4174/r/ALICE7K92');
+    assert.equal(String(own.body.link).includes('evil'), false);
     const other = await api.referralWithdraw(studentReq('b@college.edu'), { amountRupees: '500', method: 'UPI' });
     assert.notEqual(other.status, 200);
+  });
+
+  it('builds share links from the request host, not a query origin', async () => {
+    const store = enabledStore();
+    const api = createHandlers({ env: ENV, store, fetch: async () => new Response('[]') });
+    const result = await api.referralMe(studentReq('a@college.edu'), { origin: 'https://evil.example' });
+    assert.equal(result.status, 200);
+    assert.equal(result.body.link, 'http://127.0.0.1:4174/r/ALICE7K92');
   });
 
   it('does not let a normal student approve a withdrawal', async () => {
