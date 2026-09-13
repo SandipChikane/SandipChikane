@@ -246,26 +246,76 @@ async function publicConfig() {
   }
 }
 
+function clearLocalAccess() {
+  const all = loadAllEnrollments();
+  delete all[studentKey()];
+  saveAllEnrollments(all);
+}
+
+function applyServerEnrollments(payload = {}) {
+  const email = payload.email;
+  if (email) setStudentEmail(email);
+  const rows = payload.enrollments || [];
+  rows.forEach((row) => cacheEnrollment(row));
+  return rows;
+}
+
 async function refreshFromServer() {
-  const email = getStudentEmail();
-  if (!email) return { ok: false, configured: false, enrollments: [] };
   try {
     const result = await apiRequest('/api/enrollments');
-    if (result.status === 503) return { ok: false, configured: false, enrollments: [] };
-    if (!result.ok) return { ok: false, configured: true, enrollments: [] };
-    const rows = result.data.enrollments || [];
-    rows.forEach((row) => cacheEnrollment(row));
-    return { ok: true, configured: true, enrollments: rows };
+    if (result.status === 503) return { ok: false, configured: false, enrollments: [], session: false };
+    if (result.status === 401) {
+      clearLocalAccess();
+      return { ok: false, configured: true, enrollments: [], session: false };
+    }
+    if (!result.ok) return { ok: false, configured: true, enrollments: [], session: false };
+    const rows = applyServerEnrollments(result.data);
+    return {
+      ok: true,
+      configured: true,
+      session: true,
+      email: result.data.email || getStudentEmail(),
+      hasAccount: Boolean(result.data.hasAccount),
+      enrollments: rows,
+    };
   } catch {
-    return { ok: false, configured: false, enrollments: [] };
+    return { ok: false, configured: false, enrollments: [], session: false };
   }
 }
 
-async function createOrder({ courseId, email, college }) {
+async function studentLogin({ email, password }) {
+  const result = await apiRequest('/api/student-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (result.ok) applyServerEnrollments(result.data);
+  return result;
+}
+
+async function setStudentPassword({ password, currentPassword } = {}) {
+  return apiRequest('/api/student-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password, currentPassword }),
+  });
+}
+
+async function studentSession() {
+  return apiRequest('/api/student-session');
+}
+
+async function studentLogout() {
+  const result = await apiRequest('/api/student-logout', { method: 'POST' });
+  clearLocalAccess();
+  return result;
+}
+
+async function createOrder({ courseId, email, college, password }) {
   return apiRequest('/api/create-order', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ courseId, email, college }),
+    body: JSON.stringify({ courseId, email, college, password }),
   });
 }
 
@@ -326,6 +376,11 @@ window.GradflowEnrollment = {
   publicConfig,
   loadPublishedCatalog,
   refreshFromServer,
+  studentLogin,
+  setStudentPassword,
+  studentSession,
+  studentLogout,
+  clearLocalAccess,
   createOrder,
   verifyPayment,
   tpoSession,

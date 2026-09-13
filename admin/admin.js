@@ -738,6 +738,9 @@ async function renderEnrollments() {
         <label>Course
           <select name="courseId">${state.courses.map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`).join('')}</select>
         </label>
+        <label>Student password
+          <input name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Optional — lets them sign in">
+        </label>
       </div>
       <button class="button button-dark button-sm" type="submit">Grant access</button>
     </form>
@@ -773,7 +776,10 @@ async function renderEnrollments() {
       method: 'POST',
       body: Object.fromEntries(data.entries()),
     });
-    showToast('Access granted.', 'The student can open the course.');
+    const password = String(data.get('password') || '');
+    showToast('Access granted.', password
+      ? 'The student can sign in with this email and password.'
+      : 'The student can open the course after they sign in or pay.');
     renderEnrollments();
   });
   content.querySelectorAll('[data-revoke]').forEach((button) => button.addEventListener('click', async () => {
@@ -797,9 +803,9 @@ async function renderStudents() {
     </div>
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead><tr><th>Student</th><th>College</th><th>Courses</th></tr></thead>
+        <thead><tr><th>Student</th><th>College</th><th>Courses</th><th>Login</th></tr></thead>
         <tbody>
-          ${rows.map((row) => `<tr><td>${escapeHtml(row.name)}<small>${escapeHtml(row.email)}</small></td><td>${escapeHtml(row.college || '—')}</td><td>${escapeHtml(row.courses.map((item) => item.courseName).join(', '))}</td></tr>`).join('') || '<tr><td colspan="3">No students yet.</td></tr>'}
+          ${rows.map((row) => `<tr><td>${escapeHtml(row.name)}<small>${escapeHtml(row.email)}</small></td><td>${escapeHtml(row.college || '—')}</td><td>${escapeHtml(row.courses.map((item) => item.courseName).join(', '))}</td><td>${row.hasAccount ? 'Password set' : 'No password yet'}</td></tr>`).join('') || '<tr><td colspan="4">No students yet.</td></tr>'}
         </tbody>
       </table>
     </div>`;

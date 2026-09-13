@@ -32,7 +32,7 @@
       <header class="dash-header">
         <button class="dash-menu" id="dashMenu" aria-label="Open navigation"><span></span><span></span></button>
         <div class="search-box"><span>⌕</span><input aria-label="Search your learning" placeholder="Search lessons, projects &amp; resources" /></div>
-        <div class="dash-actions"><button class="notification" aria-label="Notifications">♢<i></i></button><div class="student-chip"><span class="student-avatar">AK</span><span class="student-name">Aarav Khanna</span><button aria-label="Account options">⌄</button></div></div>
+        <div class="dash-actions"><button class="notification" aria-label="Notifications">♢<i></i></button><div class="student-chip"><span class="student-avatar" id="studentAvatar">AK</span><span class="student-name" id="studentChipName">Student</span><button id="studentLogout" type="button">Sign out</button></div></div>
       </header>
 
       <div class="dash-content">
@@ -45,6 +45,25 @@
           <div class="banner-top"><div><span class="badge" id="learningBadge">KEEP YOUR MOMENTUM</span><h2>Data Analytics in the Wild</h2><p id="learningCopy">Module 6 of 8 · Turning numbers into a compelling story</p></div><span class="course-orb">▥</span></div>
           <div class="banner-bottom"><div class="wide-progress"><div class="progress-label"><span>YOUR PROGRESS</span><strong><b id="courseProgress">67</b>% complete</strong></div><div class="track"><i id="progressBar"></i></div></div><button class="button button-lime" id="continueButton">Continue learning <span>→</span></button></div>
         </section>
+        <section class="course-access-block" id="studentAuthBlock">
+          <form class="dash-auth-card" id="dashSignInForm">
+            <p class="mini-eyebrow">STUDENT SIGN IN</p>
+            <h2>Already paid? <em>Open your courses.</em></h2>
+            <p class="dash-locked-note">Use the email and password you set when you enrolled. This restores access on a new phone or browser.</p>
+            <label>College email<input id="dashEmail" type="email" required autocomplete="username" placeholder="you@college.edu" /></label>
+            <label>Password<input id="dashPassword" type="password" required autocomplete="current-password" placeholder="Your course password" /></label>
+            <button class="button button-dark" type="submit">Sign in</button>
+          </form>
+          <form class="dash-auth-card" id="dashSetPasswordForm" hidden>
+            <p class="mini-eyebrow">SAVE A PASSWORD</p>
+            <h2>Keep access on <em>other devices.</em></h2>
+            <p class="dash-locked-note" id="dashSetPasswordCopy">You are signed in on this browser. Set a password so you can come back later.</p>
+            <label>Current password<input id="dashCurrentPassword" type="password" autocomplete="current-password" placeholder="Only if you already have one" /></label>
+            <label>New password<input id="dashNewPassword" type="password" required minlength="8" autocomplete="new-password" /></label>
+            <label>Confirm password<input id="dashNewPasswordConfirm" type="password" required minlength="8" autocomplete="new-password" /></label>
+            <button class="button button-dark" type="submit">Save password</button>
+          </form>
+        </section>
         <section class="course-access-block" id="courseAccess">
           <div class="section-title-row">
             <div>
@@ -52,7 +71,7 @@
               <h2>Pay to unlock a path.</h2>
             </div>
           </div>
-          <p class="dash-locked-note">Lesson content stays locked until you pay and enroll. TPOs can see progress, never payment details.</p>
+          <p class="dash-locked-note">Lesson content stays locked until you pay and enroll. After you pay, sign in with your email and password on any device. TPOs can see progress, never payment details.</p>
           <div class="dash-course-list" id="courseAccessList"></div>
         </section>
 

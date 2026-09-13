@@ -69,7 +69,11 @@ function renderLocked(config = {}) {
   fillMedia('lockedMedia', course.promoVideoUrl, course.coverImageUrl || course.thumbnailUrl);
   const email = window.GradflowEnrollment.getStudentEmail();
   const college = window.GradflowEnrollment.getStudentCollege();
-  if (email) document.getElementById('enrollEmail').value = email;
+  if (email) {
+    document.getElementById('enrollEmail').value = email;
+    const signInEmail = document.getElementById('signInEmail');
+    if (signInEmail) signInEmail.value = email;
+  }
   if (college) document.getElementById('enrollCollege').value = college;
   if (paymentsReady) {
     payNote.textContent = `${config.mode === 'test' ? 'Razorpay test mode. ' : ''}Checkout opens with Razorpay. Card details stay with Razorpay. TPOs never see payment data.`;
@@ -161,7 +165,13 @@ document.getElementById('enrollForm')?.addEventListener('submit', async (event) 
 
   const email = document.getElementById('enrollEmail').value.trim();
   const college = document.getElementById('enrollCollege').value.trim();
+  const password = document.getElementById('enrollPassword').value;
+  const passwordConfirm = document.getElementById('enrollPasswordConfirm').value;
   if (!email || !college) return;
+  if (password !== passwordConfirm) {
+    showToast('Passwords do not match.', 'Use the same password in both fields so you can sign in later.');
+    return;
+  }
 
   window.GradflowEnrollment.setStudentEmail(email);
   window.GradflowEnrollment.setStudentCollege(college);
@@ -172,11 +182,15 @@ document.getElementById('enrollForm')?.addEventListener('submit', async (event) 
       courseId: course.id,
       email,
       college,
+      password,
     });
 
-    if (orderResult.status === 409 && orderResult.data.enrollment?.paid) {
+    if (orderResult.data.alreadyEnrolled && orderResult.data.enrollment?.paid) {
       await finishEnrollment(orderResult.data.enrollment);
       return;
+    }
+    if (orderResult.status === 409) {
+      throw new Error(orderResult.data.error || 'You already bought this course. Sign in below.');
     }
     if (!orderResult.ok) {
       throw new Error(orderResult.data.error || 'Could not create a Razorpay order.');
@@ -199,6 +213,7 @@ document.getElementById('enrollForm')?.addEventListener('submit', async (event) 
           const verifyResult = await window.GradflowEnrollment.verifyPayment({
             email,
             college,
+            password,
             courseId: course.id,
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
@@ -224,6 +239,31 @@ document.getElementById('enrollForm')?.addEventListener('submit', async (event) 
   } catch (error) {
     setPayBusy(false, `Pay ${window.GradflowEnrollment.formatPrice(course.price)} and enroll`);
     showToast('Payment could not start.', error.message);
+  }
+});
+
+document.getElementById('signInForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const email = document.getElementById('signInEmail').value.trim();
+  const password = document.getElementById('signInPassword').value;
+  const button = document.getElementById('signInButton');
+  if (button) button.disabled = true;
+  try {
+    const result = await window.GradflowEnrollment.studentLogin({ email, password });
+    if (!result.ok) {
+      throw new Error(result.data.error || 'Could not sign in.');
+    }
+    if (window.GradflowEnrollment.isEnrolled(course.id)) {
+      renderUnlocked();
+      showToast('Signed in.', `${course.name} is unlocked on this device.`);
+      document.getElementById('unlockedState').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    showToast('Signed in.', 'This email does not have this course yet. Pay below to enroll.');
+  } catch (error) {
+    showToast('Could not sign in.', error.message);
+  } finally {
+    if (button) button.disabled = false;
   }
 });
 

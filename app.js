@@ -61,8 +61,20 @@ document.addEventListener('submit', (event) => {
   event.preventDefault();
   if (modalContent.dataset.type === 'login') {
     const email = event.target.querySelector('input[type="email"]')?.value.trim();
-    if (email) window.GradflowEnrollment.setStudentEmail(email);
-    window.location.href = 'dashboard.html';
+    const password = event.target.querySelector('input[type="password"]')?.value;
+    const submit = event.target.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    window.GradflowEnrollment.studentLogin({ email, password }).then((result) => {
+      if (!result.ok) {
+        if (submit) submit.disabled = false;
+        showToast('Could not sign in.', result.data.error || 'Check your email and password.');
+        return;
+      }
+      window.location.href = 'dashboard.html';
+    }).catch(() => {
+      if (submit) submit.disabled = false;
+      showToast('Could not sign in.', 'Check your email and password, then try again.');
+    });
     return;
   }
   if (modalContent.dataset.type === 'tpo') {

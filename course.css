@@ -56,6 +56,11 @@
   padding: 28px 26px;
 }
 
+.course-lock-forms {
+  display: grid;
+  gap: 16px;
+}
+
 .course-pay-card {
   color: var(--ink);
   background: #fffdfa;
@@ -253,6 +258,47 @@
   margin-top: 3px;
   color: #66776f;
   font-size: 11px;
+}
+
+.dash-auth-card {
+  background: var(--dash-card, #fffdfa);
+  border: 1px solid var(--dash-line, rgba(11, 41, 35, 0.13));
+  padding: 22px 22px 20px;
+  margin-bottom: 16px;
+}
+
+.dash-auth-card h2 {
+  font-size: 28px;
+  letter-spacing: -1.2px;
+  margin: 8px 0 10px;
+}
+
+.dash-auth-card label {
+  display: grid;
+  gap: 6px;
+  font: 10px var(--dash-mono, var(--mono));
+  letter-spacing: 0.05em;
+  color: #52645e;
+  margin: 14px 0;
+}
+
+.dash-auth-card input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #aeb9b3;
+  background: transparent;
+  font: 14px var(--dash-sans, var(--sans));
+  padding: 9px 0 7px;
+  outline: 0;
+}
+
+.student-chip #studentLogout {
+  border: 0;
+  background: transparent;
+  font: 11px var(--dash-sans, var(--sans));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
 @media (max-width: 760px) {

@@ -3,13 +3,22 @@ const modalContent = document.getElementById('dashboardModalContent');
 const modalClose = document.getElementById('dashboardModalClose');
 const toast = document.getElementById('dashToast');
 const studentName = document.getElementById('studentFirstName');
-const savedEmail = window.GradflowEnrollment.getStudentEmail();
 const ANALYTICS_COURSE = 'data-analytics';
 
-if (savedEmail) {
+function applyStudentIdentity(email) {
+  const savedEmail = (email || window.GradflowEnrollment.getStudentEmail() || '').trim();
+  if (!savedEmail) return;
   const first = savedEmail.split('@')[0].split(/[._-]/)[0];
-  if (first) studentName.textContent = first.charAt(0).toUpperCase() + first.slice(1) + '.';
+  if (first && studentName) {
+    studentName.textContent = first.charAt(0).toUpperCase() + first.slice(1) + '.';
+  }
+  const chip = document.getElementById('studentChipName');
+  if (chip) chip.textContent = savedEmail;
+  const avatar = document.getElementById('studentAvatar');
+  if (avatar) avatar.textContent = (first || savedEmail).slice(0, 2).toUpperCase();
 }
+
+applyStudentIdentity();
 
 function analyticsUnlocked() {
   return window.GradflowEnrollment.isEnrolled(ANALYTICS_COURSE);
@@ -112,9 +121,91 @@ const sidebar = document.querySelector('.dash-sidebar');
 dashMenu.addEventListener('click', () => sidebar.classList.toggle('open'));
 document.querySelectorAll('.dash-nav a').forEach((link) => link.addEventListener('click', () => sidebar.classList.remove('open')));
 
+function setAuthForms({ session, hasAccount, email }) {
+  const signIn = document.getElementById('dashSignInForm');
+  const setPassword = document.getElementById('dashSetPasswordForm');
+  if (signIn) signIn.hidden = Boolean(session);
+  if (setPassword) {
+    setPassword.hidden = !session;
+    const copy = document.getElementById('dashSetPasswordCopy');
+    if (copy) {
+      copy.textContent = hasAccount
+        ? 'Change the password for this email. You will use it to sign in on other devices.'
+        : 'You are signed in on this browser. Set a password so you can come back later.';
+    }
+    const current = document.getElementById('dashCurrentPassword');
+    if (current) current.required = Boolean(hasAccount);
+  }
+  if (email) {
+    applyStudentIdentity(email);
+    const dashEmail = document.getElementById('dashEmail');
+    if (dashEmail && !dashEmail.value) dashEmail.value = email;
+  }
+}
+
+document.getElementById('dashSignInForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const email = document.getElementById('dashEmail').value.trim();
+  const password = document.getElementById('dashPassword').value;
+  const button = event.target.querySelector('button[type="submit"]');
+  if (button) button.disabled = true;
+  try {
+    const result = await window.GradflowEnrollment.studentLogin({ email, password });
+    if (!result.ok) throw new Error(result.data.error || 'Could not sign in.');
+    applyStudentIdentity(result.data.email || email);
+    showToast('Signed in.', 'Your paid courses are unlocked on this device.');
+    await syncCourseAccess();
+  } catch (error) {
+    showToast('Could not sign in.', error.message);
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
+
+document.getElementById('dashSetPasswordForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const password = document.getElementById('dashNewPassword').value;
+  const confirm = document.getElementById('dashNewPasswordConfirm').value;
+  const currentPassword = document.getElementById('dashCurrentPassword').value;
+  if (password !== confirm) {
+    showToast('Passwords do not match.', 'Use the same password in both fields.');
+    return;
+  }
+  const button = event.target.querySelector('button[type="submit"]');
+  if (button) button.disabled = true;
+  try {
+    const result = await window.GradflowEnrollment.setStudentPassword({ password, currentPassword });
+    if (!result.ok) throw new Error(result.data.error || 'Could not save the password.');
+    document.getElementById('dashNewPassword').value = '';
+    document.getElementById('dashNewPasswordConfirm').value = '';
+    document.getElementById('dashCurrentPassword').value = '';
+    showToast('Password saved.', 'Use this email and password to sign in on any device.');
+    await syncCourseAccess();
+  } catch (error) {
+    showToast('Password not saved.', error.message);
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
+
+document.getElementById('studentLogout')?.addEventListener('click', async () => {
+  await window.GradflowEnrollment.studentLogout();
+  applyStudentIdentity('');
+  const chip = document.getElementById('studentChipName');
+  if (chip) chip.textContent = 'Student';
+  if (studentName) studentName.textContent = 'there.';
+  showToast('Signed out.', 'Sign in again to reopen paid courses.');
+  await syncCourseAccess();
+});
+
 async function syncCourseAccess() {
   await window.GradflowEnrollment.loadPublishedCatalog();
-  await window.GradflowEnrollment.refreshFromServer();
+  const refresh = await window.GradflowEnrollment.refreshFromServer();
+  setAuthForms({
+    session: Boolean(refresh.session),
+    hasAccount: Boolean(refresh.hasAccount),
+    email: refresh.email || window.GradflowEnrollment.getStudentEmail(),
+  });
   const unlocked = analyticsUnlocked();
   const banner = document.getElementById('learning');
   const lesson = document.getElementById('lessonCard');

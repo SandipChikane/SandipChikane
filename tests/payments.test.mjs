@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { createSignedCookie, hashPassword } from '../lib/access-auth.mjs';
 import { COURSE_CATALOG } from '../lib/catalog.mjs';
 import { createHandlers } from '../lib/handlers.mjs';
 import { publicEnrollment } from '../lib/supabase.mjs';
@@ -152,12 +153,36 @@ describe('handlers with credentials', () => {
       email: 'Student@vitstudent.ac.in',
       courseId: 'data-analytics',
       college: 'VIT Vellore',
+      password: 'campus-pass-1',
     });
     assert.equal(result.status, 200);
     assert.equal(result.body.orderId, 'order_123');
     assert.equal(result.body.amount, 1490000);
     assert.equal(result.body.keyId, 'rzp_test_demo');
-    assert.match(calls.at(-1).url, /api\.razorpay\.com\/v1\/orders/);
+    const orderCall = calls.find((call) => call.url.includes('/v1/orders'));
+    assert.ok(orderCall);
+    const orderBody = JSON.parse(orderCall.options.body);
+    assert.equal(orderBody.notes.email, 'student@vitstudent.ac.in');
+    assert.equal('password' in orderBody.notes, false);
+    assert.equal(JSON.stringify(orderBody).includes('campus-pass-1'), false);
+    assert.match(orderCall.url, /api\.razorpay\.com\/v1\/orders/);
+  });
+
+  it('does not start checkout without a student password', async () => {
+    const api = createHandlers({
+      env,
+      fetch: async (url) => {
+        if (String(url).includes('/rest/v1/enrollments?')) return new Response('[]', { status: 200 });
+        return new Response('{}', { status: 404 });
+      },
+    });
+    const result = await api.createOrder({
+      email: 'student@vitstudent.ac.in',
+      courseId: 'data-analytics',
+      college: 'VIT Vellore',
+    });
+    assert.equal(result.status, 400);
+    assert.match(result.body.error, /password/i);
   });
 
   it('rejects a bad payment signature', async () => {
@@ -214,6 +239,7 @@ describe('handlers with credentials', () => {
       email: 'student@vitstudent.ac.in',
       courseId: 'data-analytics',
       college: 'VIT Vellore',
+      password: 'campus-pass-1',
       razorpay_order_id: 'order_123',
       razorpay_payment_id: 'pay_123',
       razorpay_signature: signature,
@@ -222,6 +248,7 @@ describe('handlers with credentials', () => {
     assert.equal(result.body.paid, true);
     assert.equal(result.body.enrollment.courseId, 'data-analytics');
     assert.equal(JSON.stringify(result.body).includes('pay_123'), false);
+    assert.equal(JSON.stringify(result.body).includes('campus-pass-1'), false);
     assert.match(result.headers['Set-Cookie'], /gf_student=/);
   });
 
@@ -260,5 +287,142 @@ describe('handlers with credentials', () => {
     const api = createHandlers({ env, fetch: async () => new Response('[]') });
     const result = await api.tpoEnrollments({ college: 'VIT Vellore' }, { headers: {} });
     assert.equal(result.status, 401);
+  });
+
+  it('does not unlock an existing purchase without the student password', async () => {
+    const api = createHandlers({
+      env,
+      fetch: async (url) => {
+        if (String(url).includes('/rest/v1/enrollments?')) {
+          return new Response(JSON.stringify([{
+            student_email: 'student@vitstudent.ac.in',
+            student_name: 'Student',
+            college: 'VIT Vellore',
+            course_id: 'data-analytics',
+            course_name: 'Data Analytics in the Wild',
+            paid: true,
+            enrolled_at: '2026-09-13T00:00:00.000Z',
+          }]), { status: 200 });
+        }
+        return new Response('[]', { status: 200 });
+      },
+    });
+    const result = await api.createOrder({
+      email: 'student@vitstudent.ac.in',
+      courseId: 'data-analytics',
+      college: 'VIT Vellore',
+      password: 'campus-pass-1',
+    });
+    assert.equal(result.status, 409);
+    assert.equal(result.body.alreadyEnrolled, true);
+    assert.equal(result.body.enrollment, undefined);
+  });
+
+  it('restores a paid course when the student password matches', async () => {
+    const passwordHash = hashPassword('campus-pass-1');
+    const api = createHandlers({
+      env,
+      fetch: async (url) => {
+        const href = String(url);
+        if (href.includes('/rest/v1/student_accounts')) {
+          return new Response(JSON.stringify([{
+            email: 'student@vitstudent.ac.in',
+            password_hash: passwordHash,
+          }]), { status: 200 });
+        }
+        if (href.includes('/rest/v1/enrollments?')) {
+          return new Response(JSON.stringify([{
+            student_email: 'student@vitstudent.ac.in',
+            student_name: 'Student',
+            college: 'VIT Vellore',
+            course_id: 'data-analytics',
+            course_name: 'Data Analytics in the Wild',
+            paid: true,
+            enrolled_at: '2026-09-13T00:00:00.000Z',
+          }]), { status: 200 });
+        }
+        return new Response('[]', { status: 200 });
+      },
+    });
+    const result = await api.createOrder({
+      email: 'student@vitstudent.ac.in',
+      courseId: 'data-analytics',
+      college: 'VIT Vellore',
+      password: 'campus-pass-1',
+    });
+    assert.equal(result.status, 200);
+    assert.equal(result.body.alreadyEnrolled, true);
+    assert.equal(result.body.enrollment.courseId, 'data-analytics');
+    assert.match(result.headers['Set-Cookie'], /gf_student=/);
+  });
+
+  it('signs a student in with email and password and lists paid courses', async () => {
+    const passwordHash = hashPassword('campus-pass-1');
+    const api = createHandlers({
+      env,
+      fetch: async (url) => {
+        const href = String(url);
+        if (href.includes('/rest/v1/student_accounts')) {
+          return new Response(JSON.stringify([{
+            email: 'student@vitstudent.ac.in',
+            password_hash: passwordHash,
+          }]), { status: 200 });
+        }
+        if (href.includes('/rest/v1/enrollments?')) {
+          return new Response(JSON.stringify([{
+            student_email: 'student@vitstudent.ac.in',
+            student_name: 'Student',
+            college: 'VIT Vellore',
+            course_id: 'data-analytics',
+            course_name: 'Data Analytics in the Wild',
+            paid: true,
+            enrolled_at: '2026-09-13T00:00:00.000Z',
+          }]), { status: 200 });
+        }
+        return new Response('[]', { status: 200 });
+      },
+    });
+    const rejected = await api.studentLogin({
+      email: 'student@vitstudent.ac.in',
+      password: 'wrong-password',
+    });
+    assert.equal(rejected.status, 401);
+
+    const result = await api.studentLogin({
+      email: 'Student@vitstudent.ac.in',
+      password: 'campus-pass-1',
+    });
+    assert.equal(result.status, 200);
+    assert.equal(result.body.email, 'student@vitstudent.ac.in');
+    assert.equal(result.body.enrollments[0].courseId, 'data-analytics');
+    assert.match(result.headers['Set-Cookie'], /gf_student=/);
+    assert.equal(JSON.stringify(result.body).includes('campus-pass-1'), false);
+    assert.equal(JSON.stringify(result.body).includes('password_hash'), false);
+  });
+
+  it('lets a signed-in student set a first password', async () => {
+    const { cookie } = createSignedCookie('gf_student', 'student@vitstudent.ac.in', env, 60_000);
+    const api = createHandlers({
+      env,
+      fetch: async (url, options = {}) => {
+        if (String(url).includes('/rest/v1/student_accounts') && (options.method || 'GET') === 'GET') {
+          return new Response('[]', { status: 200 });
+        }
+        if (String(url).includes('/rest/v1/student_accounts') && options.method === 'POST') {
+          const body = JSON.parse(options.body);
+          assert.equal(body.email, 'student@vitstudent.ac.in');
+          assert.match(body.password_hash, /^scrypt\$/);
+          assert.equal(JSON.stringify(body).includes('new-pass-99'), false);
+          return new Response(JSON.stringify([body]), { status: 201 });
+        }
+        return new Response('[]', { status: 200 });
+      },
+    });
+    const result = await api.studentPassword(
+      { headers: { cookie: cookie.split(';')[0] } },
+      { password: 'new-pass-99' },
+    );
+    assert.equal(result.status, 200);
+    assert.equal(result.body.hasAccount, true);
   });
 });
