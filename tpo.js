@@ -33,7 +33,8 @@ function resolveCollege(raw) {
 
 const college = resolveCollege();
 const tpoName = localStorage.getItem('gradflowTpoName') || 'Campus TPO';
-const collegeStudents = STUDENTS.filter((student) => student.college.toLowerCase() === college.toLowerCase());
+const TONES = ['', 'teal', 'mint', 'lilac', 'gold'];
+let collegeStudents = STUDENTS.filter((student) => student.college.toLowerCase() === college.toLowerCase());
 
 document.getElementById('collegeHeading').textContent = college;
 document.getElementById('collegeLock').textContent = college;
@@ -252,8 +253,80 @@ document.querySelectorAll('.dash-nav a').forEach((link) => {
   });
 });
 
+function pathKeyFromEnrollment(row) {
+  const id = String(row.courseId || '').toLowerCase();
+  const name = String(row.courseName || '').toLowerCase();
+  if (id.includes('design') || name.includes('design')) return 'design';
+  if (id.includes('web') || id.includes('ai') || name.includes('web') || name.includes('ai')) return 'tech';
+  return 'analytics';
+}
+
+function formatEnrolled(iso) {
+  const date = new Date(iso);
+  if (!iso || Number.isNaN(date.getTime())) return 'Just now';
+  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function initialsFrom(name, email) {
+  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  const source = (name || email || 'ST').trim();
+  return source.slice(0, 2).toUpperCase();
+}
+
+function studentFromRemote(row, index) {
+  const email = String(row.studentEmail || '').trim();
+  const name = String(row.studentName || email.split('@')[0] || 'Student').trim();
+  return {
+    id: `paid-${email}-${row.courseId}`,
+    college,
+    name,
+    initials: initialsFrom(name, email),
+    email,
+    department: '—',
+    year: 'Enrolled',
+    path: row.courseName,
+    pathKey: pathKeyFromEnrollment(row),
+    enrolled: formatEnrolled(row.enrolledAt),
+    status: 'active',
+    progress: 8,
+    lastActive: 'Just enrolled',
+    project: '—',
+    career: 12,
+    tone: TONES[index % TONES.length],
+  };
+}
+
+async function mergeRemoteEnrollments() {
+  if (!window.GradflowEnrollment?.tpoEnrollments) return;
+  try {
+    const result = await window.GradflowEnrollment.tpoEnrollments(college);
+    if (!result.ok) return;
+    const remote = result.data.enrollments || [];
+    remote.forEach((row, index) => {
+      if (!row.paid || !row.studentEmail) return;
+      const existing = collegeStudents.find((student) => student.email.toLowerCase() === String(row.studentEmail).toLowerCase());
+      if (existing) {
+        existing.path = row.courseName || existing.path;
+        existing.pathKey = pathKeyFromEnrollment(row);
+        existing.enrolled = formatEnrolled(row.enrolledAt);
+        if (existing.status === 'invited') existing.status = 'active';
+        return;
+      }
+      collegeStudents.push(studentFromRemote(row, collegeStudents.length + index));
+    });
+    render();
+    if (collegeStudents.length === 0) {
+      document.getElementById('kpiEnrolledHint').textContent = `No Gradflow enrollments from ${college} yet`;
+    }
+  } catch {
+    // Keep the local college cohort if Supabase is not connected.
+  }
+}
+
 if (collegeStudents.length === 0) {
   document.getElementById('kpiEnrolledHint').textContent = `No Gradflow enrollments from ${college} yet`;
 }
 
 render();
+mergeRemoteEnrollments();

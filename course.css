@@ -107,6 +107,11 @@
   border-color: var(--ink);
 }
 
+.course-pay-card button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .enrolled-chip small,
 .current-lesson .mini-kicker {
   color: #b7c9c1;
