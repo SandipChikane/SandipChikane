@@ -52,21 +52,9 @@ const sidebar = document.querySelector('.dash-sidebar');
 dashMenu.addEventListener('click', () => sidebar.classList.toggle('open'));
 document.querySelectorAll('.dash-nav a').forEach((link) => link.addEventListener('click', () => sidebar.classList.remove('open')));
 
-function setAuthForms({ session, hasAccount, email }) {
+function setAuthForms({ session, email }) {
   const signIn = document.getElementById('dashSignInForm');
-  const setPassword = document.getElementById('dashSetPasswordForm');
   if (signIn) signIn.hidden = Boolean(session);
-  if (setPassword) {
-    setPassword.hidden = !session || hasAccount;
-    const copy = document.getElementById('dashSetPasswordCopy');
-    if (copy) {
-      copy.textContent = hasAccount
-        ? 'Change the password for this email. You will use it on other devices.'
-        : 'You are signed in on this browser. Set a password so you can come back later.';
-    }
-    const current = document.getElementById('dashCurrentPassword');
-    if (current) current.required = Boolean(hasAccount);
-  }
   if (email) {
     applyStudentIdentity(email);
     const dashEmail = document.getElementById('dashEmail');
@@ -88,32 +76,6 @@ document.getElementById('dashSignInForm')?.addEventListener('submit', async (eve
     await syncReferralPage();
   } catch (error) {
     showToast('Could not sign in.', error.message);
-  } finally {
-    if (button) button.disabled = false;
-  }
-});
-
-document.getElementById('dashSetPasswordForm')?.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const password = document.getElementById('dashNewPassword').value;
-  const confirm = document.getElementById('dashNewPasswordConfirm').value;
-  const currentPassword = document.getElementById('dashCurrentPassword').value;
-  if (password !== confirm) {
-    showToast('Passwords do not match.', 'Use the same password in both fields.');
-    return;
-  }
-  const button = event.target.querySelector('button[type="submit"]');
-  if (button) button.disabled = true;
-  try {
-    const result = await window.GradflowEnrollment.setStudentPassword({ password, currentPassword });
-    if (!result.ok) throw new Error(result.data.error || 'Could not save the password.');
-    document.getElementById('dashNewPassword').value = '';
-    document.getElementById('dashNewPasswordConfirm').value = '';
-    document.getElementById('dashCurrentPassword').value = '';
-    showToast('Password saved.', 'Use this email and password to sign in on any device.');
-    await syncReferralPage();
-  } catch (error) {
-    showToast('Password not saved.', error.message);
   } finally {
     if (button) button.disabled = false;
   }
@@ -180,7 +142,6 @@ async function syncReferralPage() {
   const refresh = await window.GradflowEnrollment.refreshFromServer();
   setAuthForms({
     session: Boolean(refresh.session),
-    hasAccount: Boolean(refresh.hasAccount),
     email: refresh.email || window.GradflowEnrollment.getStudentEmail(),
   });
   await renderReferralPage(Boolean(refresh.session));

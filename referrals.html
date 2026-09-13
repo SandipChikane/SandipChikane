@@ -50,19 +50,10 @@
           <form class="dash-auth-card" id="dashSignInForm">
             <p class="mini-eyebrow">STUDENT SIGN IN</p>
             <h2>Already paid? <em>Open referrals.</em></h2>
-            <p class="dash-locked-note">Use the email and password you set when you enrolled.</p>
+            <p class="dash-locked-note">Use the email and password you set when you enrolled. Set or change a password from Overview if you need one.</p>
             <label>College email<input id="dashEmail" type="email" required autocomplete="username" placeholder="you@college.edu" /></label>
             <label>Password<input id="dashPassword" type="password" required autocomplete="current-password" placeholder="Your course password" /></label>
             <button class="button button-dark" type="submit">Sign in</button>
-          </form>
-          <form class="dash-auth-card" id="dashSetPasswordForm" hidden>
-            <p class="mini-eyebrow">SAVE A PASSWORD</p>
-            <h2>Keep access on <em>other devices.</em></h2>
-            <p class="dash-locked-note" id="dashSetPasswordCopy">You are signed in on this browser. Set a password so you can come back later.</p>
-            <label>Current password<input id="dashCurrentPassword" type="password" autocomplete="current-password" placeholder="Only if you already have one" /></label>
-            <label>New password<input id="dashNewPassword" type="password" required minlength="8" autocomplete="new-password" /></label>
-            <label>Confirm password<input id="dashNewPasswordConfirm" type="password" required minlength="8" autocomplete="new-password" /></label>
-            <button class="button button-dark" type="submit">Save password</button>
           </form>
         </section>
 
