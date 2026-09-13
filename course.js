@@ -1,5 +1,5 @@
 const params = new URLSearchParams(window.location.search);
-const course = window.GradflowEnrollment.courseById(params.get('course'))
+let course = window.GradflowEnrollment.courseById(params.get('course'))
   || window.GradflowEnrollment.courseByName(params.get('course'));
 const lockedState = document.getElementById('lockedState');
 const unlockedState = document.getElementById('unlockedState');
@@ -35,15 +35,18 @@ function renderUnlocked() {
   }
   const modules = document.getElementById('moduleList');
   modules.replaceChildren();
-  course.modules.forEach((module) => {
+  (course.modules || []).forEach((module) => {
     const item = document.createElement('li');
     item.innerHTML = `<b>${module.number}</b><span>${module.title}</span><span>${module.time}</span>`;
     modules.appendChild(item);
   });
-  document.getElementById('lessonType').textContent = `${course.lesson.type} · MODULE ${course.lesson.number}`;
-  document.getElementById('lessonTitle').textContent = course.lesson.title;
-  document.getElementById('lessonCopy').textContent = course.lesson.copy;
-  document.getElementById('lessonTime').textContent = `${course.lesson.minutes} min · ${course.tools.join(' · ')}`;
+  const lesson = course.lesson || {};
+  document.getElementById('lessonType').textContent = `${lesson.type || 'LESSON'} · MODULE ${lesson.number || ''}`;
+  document.getElementById('lessonTitle').textContent = lesson.title || course.name;
+  document.getElementById('lessonCopy').textContent = lesson.copy || course.blurb || '';
+  document.getElementById('lessonTime').textContent = `${lesson.minutes || 0} min · ${(course.tools || []).join(' · ')}`;
+  fillMedia('lessonMedia', lesson.videoUrl, lesson.imageUrl);
+  renderLessonResource(lesson);
   lockedState.hidden = true;
   unlockedState.hidden = false;
   missingState.hidden = true;
@@ -56,9 +59,14 @@ function renderLocked(config = {}) {
   document.getElementById('lockedBlurb').textContent = `${course.blurb} Enroll to open the syllabus, current lesson, and ${course.project}.`;
   document.getElementById('lockedPrice').textContent = window.GradflowEnrollment.formatPrice(course.price);
   document.getElementById('lockedMeta').textContent = `${course.weeks} weeks · ${course.tools.join(' · ')}`;
+  fillMedia('lockedMedia', course.promoVideoUrl, course.coverImageUrl || course.thumbnailUrl);
   const email = window.GradflowEnrollment.getStudentEmail();
   const college = window.GradflowEnrollment.getStudentCollege();
-  if (email) document.getElementById('enrollEmail').value = email;
+  if (email) {
+    document.getElementById('enrollEmail').value = email;
+    const signInEmail = document.getElementById('signInEmail');
+    if (signInEmail) signInEmail.value = email;
+  }
   if (college) document.getElementById('enrollCollege').value = college;
   if (paymentsReady) {
     payNote.textContent = `${config.mode === 'test' ? 'Razorpay test mode. ' : ''}Checkout opens with Razorpay. Card details stay with Razorpay. TPOs never see payment data.`;
@@ -74,12 +82,128 @@ function renderLocked(config = {}) {
 
 async function finishEnrollment(record) {
   window.GradflowEnrollment.cacheEnrollment(record);
+  await hydrateCourse();
   renderUnlocked();
   showToast('Payment verified.', `${course.name} is unlocked. TPOs never see this payment.`);
   unlockedState.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function protectMedia(element) {
+  if (!element) return element;
+  element.controlsList = 'nodownload noremoteplayback';
+  element.disablePictureInPicture = true;
+  element.setAttribute('controlsList', 'nodownload noremoteplayback');
+  element.setAttribute('disablePictureInPicture', '');
+  element.setAttribute('controlslist', 'nodownload noremoteplayback');
+  element.draggable = false;
+  element.addEventListener('contextmenu', (event) => event.preventDefault());
+  element.addEventListener('dragstart', (event) => event.preventDefault());
+  return element;
+}
+
+function renderLessonResource(lesson = {}) {
+  const resource = document.getElementById('lessonResource');
+  if (!resource) return;
+  resource.replaceChildren();
+  if (lesson.resourceUrl) {
+    const card = document.createElement('div');
+    card.className = 'resource-card';
+    const button = document.createElement('button');
+    button.className = 'arrow-link';
+    button.type = 'button';
+    button.textContent = `${lesson.resourceLabel || 'Open resource'} →`;
+    const frame = document.createElement('div');
+    frame.className = 'resource-frame';
+    frame.hidden = true;
+    button.addEventListener('click', () => openProtectedResource(frame, lesson.resourceUrl));
+    const note = document.createElement('p');
+    note.className = 'resource-note';
+    note.textContent = 'View in the browser. Downloads are turned off.';
+    card.append(button, frame, note);
+    resource.appendChild(card);
+    resource.hidden = false;
+    return;
+  }
+  if (lesson.resourceBlocked) {
+    const note = document.createElement('p');
+    note.className = 'resource-note';
+    note.textContent = 'This file stays in the lesson player and cannot be downloaded.';
+    resource.appendChild(note);
+    resource.hidden = false;
+    return;
+  }
+  resource.hidden = true;
+}
+
+function openProtectedResource(frame, url) {
+  frame.hidden = false;
+  frame.replaceChildren();
+  const kind = new URL(url, window.location.origin).searchParams.get('kind');
+  if (kind === 'image' || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(url)) {
+    const image = protectMedia(document.createElement('img'));
+    image.src = url;
+    image.alt = 'Lesson resource';
+    frame.appendChild(image);
+    return;
+  }
+  if (kind === 'video' || /\.(mp4|webm|m4v|mov)(\?|$)/i.test(url)) {
+    const video = protectMedia(document.createElement('video'));
+    video.src = url;
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = 'metadata';
+    frame.appendChild(video);
+    return;
+  }
+  const iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.title = 'Lesson resource';
+  iframe.setAttribute('referrerpolicy', 'no-referrer');
+  iframe.addEventListener('contextmenu', (event) => event.preventDefault());
+  frame.appendChild(iframe);
+}
+
+function fillMedia(id, videoUrl, imageUrl) {
+  const node = document.getElementById(id);
+  if (!node) return;
+  node.replaceChildren();
+  if (videoUrl) {
+    const video = protectMedia(document.createElement('video'));
+    video.src = videoUrl;
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = 'metadata';
+    node.appendChild(video);
+    node.hidden = false;
+    return;
+  }
+  if (imageUrl) {
+    const image = protectMedia(document.createElement('img'));
+    image.src = imageUrl;
+    image.alt = '';
+    node.appendChild(image);
+    node.hidden = false;
+    return;
+  }
+  node.hidden = true;
+}
+
+async function hydrateCourse() {
+  const id = params.get('course') || course?.id;
+  if (!id) return;
+  const detail = await window.GradflowEnrollment.loadStudentCourse(id, {
+    preview: params.get('preview') === '1',
+  });
+  if (detail) course = detail;
+}
+
 async function boot() {
+  await window.GradflowEnrollment.loadPublishedCatalog();
+  course = window.GradflowEnrollment.courseById(params.get('course'))
+    || window.GradflowEnrollment.courseByName(params.get('course'));
+  if (params.get('preview') === '1' && params.get('course')) {
+    await hydrateCourse();
+  }
   if (!course) {
     missingState.hidden = false;
     lockedState.hidden = true;
@@ -92,7 +216,13 @@ async function boot() {
     window.GradflowEnrollment.refreshFromServer(),
   ]);
 
+  if (course.preview) {
+    renderUnlocked();
+    showToast('Admin preview.', 'Draft courses stay hidden from students until you publish.');
+    return;
+  }
   if (window.GradflowEnrollment.isEnrolled(course.id)) {
+    await hydrateCourse();
     renderUnlocked();
     return;
   }
@@ -105,7 +235,13 @@ document.getElementById('enrollForm')?.addEventListener('submit', async (event) 
 
   const email = document.getElementById('enrollEmail').value.trim();
   const college = document.getElementById('enrollCollege').value.trim();
+  const password = document.getElementById('enrollPassword').value;
+  const passwordConfirm = document.getElementById('enrollPasswordConfirm').value;
   if (!email || !college) return;
+  if (password !== passwordConfirm) {
+    showToast('Passwords do not match.', 'Use the same password in both fields so you can sign in later.');
+    return;
+  }
 
   window.GradflowEnrollment.setStudentEmail(email);
   window.GradflowEnrollment.setStudentCollege(college);
@@ -116,11 +252,15 @@ document.getElementById('enrollForm')?.addEventListener('submit', async (event) 
       courseId: course.id,
       email,
       college,
+      password,
     });
 
-    if (orderResult.status === 409 && orderResult.data.enrollment?.paid) {
+    if (orderResult.data.alreadyEnrolled && orderResult.data.enrollment?.paid) {
       await finishEnrollment(orderResult.data.enrollment);
       return;
+    }
+    if (orderResult.status === 409) {
+      throw new Error(orderResult.data.error || 'You already bought this course. Sign in below.');
     }
     if (!orderResult.ok) {
       throw new Error(orderResult.data.error || 'Could not create a Razorpay order.');
@@ -143,6 +283,7 @@ document.getElementById('enrollForm')?.addEventListener('submit', async (event) 
           const verifyResult = await window.GradflowEnrollment.verifyPayment({
             email,
             college,
+            password,
             courseId: course.id,
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
@@ -171,8 +312,40 @@ document.getElementById('enrollForm')?.addEventListener('submit', async (event) 
   }
 });
 
+document.getElementById('signInForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const email = document.getElementById('signInEmail').value.trim();
+  const password = document.getElementById('signInPassword').value;
+  const button = document.getElementById('signInButton');
+  if (button) button.disabled = true;
+  try {
+    const result = await window.GradflowEnrollment.studentLogin({ email, password });
+    if (!result.ok) {
+      throw new Error(result.data.error || 'Could not sign in.');
+    }
+    if (window.GradflowEnrollment.isEnrolled(course.id)) {
+      await hydrateCourse();
+      renderUnlocked();
+      showToast('Signed in.', `${course.name} is unlocked on this device.`);
+      document.getElementById('unlockedState').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    showToast('Signed in.', 'This email does not have this course yet. Pay below to enroll.');
+  } catch (error) {
+    showToast('Could not sign in.', error.message);
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
+
 document.getElementById('startContent')?.addEventListener('click', () => {
   document.getElementById('currentLesson').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+document.addEventListener('contextmenu', (event) => {
+  if (event.target.closest('.course-media, .resource-frame, .current-lesson video, .current-lesson img')) {
+    event.preventDefault();
+  }
 });
 
 boot();

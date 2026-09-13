@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#09221d" />
+    <title>Admin — Gradflow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/dashboard.css" />
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body class="dashboard-body admin-body">
+    <section class="admin-login" id="loginView">
+      <form class="admin-login-card" id="loginForm">
+        <a href="/" class="brand" aria-label="Gradflow home"><span class="brand-mark"><i></i><i></i><i></i></span><span>gradflow<span class="period">.</span></span></a>
+        <p class="mini-eyebrow">ADMIN PORTAL</p>
+        <h1>Run the <em>catalog.</em></h1>
+        <p>Upload videos, images, titles, syllabus, and manage enrollments. Students and TPOs never see this screen.</p>
+        <label>Admin email
+          <input id="loginEmail" type="email" name="email" required autocomplete="username" />
+        </label>
+        <label>Admin password
+          <input id="loginPassword" type="password" name="password" required autocomplete="current-password" />
+        </label>
+        <button class="button button-lime full-button" type="submit">Enter workspace <span>→</span></button>
+        <small class="form-note">Use ADMIN_EMAIL and ADMIN_PASSWORD from your server environment.</small>
+      </form>
+    </section>
+
+    <div class="admin-shell" id="appView" hidden>
+      <aside class="dash-sidebar">
+        <a href="/" class="brand dash-brand" aria-label="Gradflow home"><span class="brand-mark"><i></i><i></i><i></i></span><span>gradflow<span class="period">.</span></span></a>
+        <nav class="dash-nav" id="adminNav" aria-label="Admin navigation">
+          <a href="#overview" data-view="overview" class="active"><span>▦</span> Overview</a>
+          <a href="#courses" data-view="courses"><span>▤</span> Courses</a>
+          <a href="#media" data-view="media"><span>▣</span> Media library</a>
+          <a href="#enrollments" data-view="enrollments"><span>↗</span> Enrollments</a>
+          <a href="#students" data-view="students"><span>◎</span> Students</a>
+          <a href="#colleges" data-view="colleges"><span>⌂</span> Colleges</a>
+          <a href="#settings" data-view="settings"><span>⚙</span> Settings</a>
+          <a href="#audit" data-view="audit"><span>☰</span> Activity</a>
+        </nav>
+        <div class="side-bottom">
+          <button id="logoutButton" type="button"><span>←</span> Sign out</button>
+          <a href="/#courses">View landing courses</a>
+        </div>
+      </aside>
+      <main class="dash-main">
+        <header class="dash-header">
+          <button class="dash-menu" id="dashMenu" type="button" aria-label="Open menu"><span></span><span></span></button>
+          <p class="dashboard-eyebrow">ADMIN · <span id="adminEmailLabel">signed in</span></p>
+          <div class="dash-actions">
+            <a class="button button-dark button-sm" href="#course/new">New course <span>+</span></a>
+          </div>
+        </header>
+        <div class="dash-content admin-content" id="adminContent"></div>
+      </main>
+    </div>
+
+    <div class="toast dash-toast" id="adminToast" role="status" aria-live="polite">
+      <span>✓</span>
+      <div><strong>Saved.</strong><small>The catalog is up to date.</small></div>
+    </div>
+    <script src="/admin/admin.js"></script>
+  </body>
+</html>

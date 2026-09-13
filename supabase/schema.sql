@@ -37,3 +37,25 @@ revoke all on public.enrollments from anon, authenticated;
 revoke all on public.tpo_enrollments from anon, authenticated;
 grant all on public.enrollments to service_role;
 grant select on public.tpo_enrollments to service_role;
+
+create table if not exists public.student_accounts (
+  email text primary key,
+  password_hash text not null,
+  name text,
+  college text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.student_accounts enable row level security;
+
+revoke all on table public.student_accounts from anon, authenticated;
+grant all on table public.student_accounts to service_role;
+
+drop policy if exists "student_accounts_no_anon" on public.student_accounts;
+create policy "student_accounts_no_anon"
+  on public.student_accounts
+  for all
+  to anon, authenticated
+  using (false)
+  with check (false);

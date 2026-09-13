@@ -1,0 +1,8 @@
+.cursor
+*.webp
+*.log
+tests
+server.mjs
+supabase
+.env
+.env.local

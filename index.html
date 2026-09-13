@@ -15,7 +15,7 @@
   <body>
     <div class="announcement">
       <span class="pulse-dot"></span>
-      <span>Fresh cohort opens <strong>16 September</strong> · Early learners save 40%</span>
+      <span id="announcementCopy">New learning paths appear here when you publish them</span>
       <a href="#courses">View courses <span>→</span></a>
     </div>
 
@@ -92,30 +92,13 @@
         <div class="section-wrap">
           <div class="course-heading"><div><div class="section-label light"><span>02</span> PICK YOUR PATH</div><h2>Build for the role<br />you <em>want.</em></h2></div><p>Focused learning paths shaped around the work companies are hiring for right now.</p></div>
           <div class="course-tabs" role="tablist" aria-label="Course filters">
-            <button class="active" data-filter="all" role="tab">All paths <span>06</span></button>
+            <button class="active" data-filter="all" role="tab">All paths <span id="courseCount">00</span></button>
             <button data-filter="analytics" role="tab">Analytics</button><button data-filter="tech" role="tab">Technology</button><button data-filter="design" role="tab">Design</button>
           </div>
-          <div class="course-grid">
-            <article class="course-card featured" data-category="analytics">
-              <div class="course-visual visual-analytics"><span class="course-tag">MOST LOVED</span><span class="visual-symbol">▥</span><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i></div></div>
-              <div class="course-body"><div class="course-meta"><span>ANALYTICS</span><span>16 WEEKS</span></div><h3>Data Analytics<br />in the Wild</h3><p>Turn messy data into decisions people act on.</p><div class="access-row" data-access-for="data-analytics"><span class="course-price">₹14,900</span><span class="access-pill locked">Locked</span></div><div class="course-footer"><div class="tool-badges"><span>Excel</span><span>SQL</span><span>Power BI</span></div><button class="round-arrow" data-course-id="data-analytics" data-course="Data Analytics in the Wild" aria-label="Open Data Analytics in the Wild">↗</button></div></div>
-            </article>
-            <article class="course-card" data-category="tech">
-              <div class="course-visual visual-dev"><span class="visual-code">&lt;/&gt;</span><span class="code-window"><i></i><i></i><i></i><b>build()</b><em>ship it.</em></span></div>
-              <div class="course-body"><div class="course-meta"><span>TECHNOLOGY</span><span>14 WEEKS</span></div><h3>Modern Web<br />Development</h3><p>Design, build and deploy products that work.</p><div class="access-row" data-access-for="web-dev"><span class="course-price">₹16,900</span><span class="access-pill locked">Locked</span></div><div class="course-footer"><div class="tool-badges"><span>React</span><span>Git</span><span>AI</span></div><button class="round-arrow" data-course-id="web-dev" data-course="Modern Web Development" aria-label="Open Modern Web Development">↗</button></div></div>
-            </article>
-            <article class="course-card" data-category="design">
-              <div class="course-visual visual-design"><div class="design-shape shape-a"></div><div class="design-shape shape-b"></div><div class="design-shape shape-c"></div><span>UX</span></div>
-              <div class="course-body"><div class="course-meta"><span>DESIGN</span><span>12 WEEKS</span></div><h3>Product Design<br />Foundations</h3><p>Go from user insight to a case study with impact.</p><div class="access-row" data-access-for="product-design"><span class="course-price">₹12,900</span><span class="access-pill locked">Locked</span></div><div class="course-footer"><div class="tool-badges"><span>Figma</span><span>Notion</span></div><button class="round-arrow" data-course-id="product-design" data-course="Product Design Foundations" aria-label="Open Product Design Foundations">↗</button></div></div>
-            </article>
-            <article class="course-card compact-card" data-category="analytics">
-              <div class="compact-icon">◎</div><div><div class="course-meta"><span>ANALYTICS</span><span>10 WEEKS</span></div><h3>Business Analytics</h3><p>Make sharper decisions with data.</p><div class="access-row" data-access-for="business-analytics"><span class="course-price">₹9,900</span><span class="access-pill locked">Locked</span></div></div><button class="round-arrow" data-course-id="business-analytics" data-course="Business Analytics" aria-label="Open Business Analytics">↗</button>
-            </article>
-            <article class="course-card compact-card" data-category="tech">
-              <div class="compact-icon purple">✦</div><div><div class="course-meta"><span>TECHNOLOGY</span><span>12 WEEKS</span></div><h3>AI for Work</h3><p>Use AI as a thoughtful co-pilot.</p><div class="access-row" data-access-for="ai-for-work"><span class="course-price">₹11,900</span><span class="access-pill locked">Locked</span></div></div><button class="round-arrow" data-course-id="ai-for-work" data-course="AI for Work" aria-label="Open AI for Work">↗</button>
-            </article>
+          <div class="course-grid" id="courseGrid">
+            <p class="course-empty" id="courseEmpty">Published courses will appear here. Add one in the admin portal, then set it to Published.</p>
           </div>
-          <button class="see-all" data-filter="all">See all learning paths <span>→</span></button>
+          <button class="see-all" data-filter="all" hidden>See all learning paths <span>→</span></button>
         </div>
       </section>
 
@@ -174,7 +157,7 @@
     </main>
 
     <footer>
-      <div class="section-wrap footer-grid"><div><a href="#top" class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>gradflow<span class="period">.</span></span></a><p>From campus to career,<br />with proof.</p></div><div class="footer-links"><div><strong>EXPLORE</strong><a href="#courses">Learning paths</a><a href="course.html?course=data-analytics">Course access</a><a href="#stories">Student stories</a></div><div><strong>FOR PARTNERS</strong><a href="#tpo">For TPOs</a><a href="tpo.html">TPO workspace</a><a href="mailto:hello@gradflow.in">Talk to us</a></div><div><strong>FOLLOW</strong><a href="#top">LinkedIn ↗</a><a href="#top">Instagram ↗</a><a href="#top">YouTube ↗</a></div></div></div>
+      <div class="section-wrap footer-grid"><div><a href="#top" class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>gradflow<span class="period">.</span></span></a><p>From campus to career,<br />with proof.</p></div><div class="footer-links"><div><strong>EXPLORE</strong><a href="#courses">Learning paths</a><a href="#courses">Course access</a><a href="#stories">Student stories</a></div><div><strong>FOR PARTNERS</strong><a href="#tpo">For TPOs</a><a href="tpo.html">TPO workspace</a><a href="admin/">Admin portal</a><a href="mailto:hello@gradflow.in">Talk to us</a></div><div><strong>FOLLOW</strong><a href="#top">LinkedIn ↗</a><a href="#top">Instagram ↗</a><a href="#top">YouTube ↗</a></div></div></div>
       <div class="section-wrap footer-bottom"><span>© 2026 Gradflow Learning Pvt. Ltd.</span><div><a href="#top">Privacy</a><a href="#top">Terms</a></div><span>Made for the next move <i>✦</i></span></div>
     </footer>
 
@@ -186,8 +169,8 @@
     </div>
 
     <template id="courseModalTemplate"><div class="modal-eyebrow">LEARNING PATH</div><h2 id="modalTitle">Make this your<br /><em>starting point.</em></h2><p class="modal-description">Get the complete syllabus, project list and next cohort details for <strong class="dynamic-course">this pathway</strong>.</p><form class="lead-form"><label>Your name<input type="text" required placeholder="What should we call you?" /></label><label>College email<input type="email" required placeholder="you@college.edu" /></label><button class="button button-lime" type="submit">Send me the details <span>→</span></button></form><small class="form-note">No spam. Just the course details and cohort updates.</small></template>
-    <template id="tpoModalTemplate"><div class="modal-eyebrow">FOR TRAINING &amp; PLACEMENT OFFICERS</div><h2 id="modalTitle">Your students’<br /><em>momentum</em>, visible.</h2><p class="modal-description">Open your free TPO workspace to see enrollment and progress for students from your college only.</p><form class="lead-form"><label>Your name<input type="text" name="name" required placeholder="Name" /></label><label>Official email<input type="email" name="email" required placeholder="name@college.edu" /></label><label>College name<input type="text" name="college" required placeholder="Your institution" /></label><button class="button button-dark" type="submit">Open TPO workspace <span>→</span></button></form></template>
-    <template id="loginModalTemplate"><div class="modal-eyebrow">WELCOME BACK</div><h2 id="modalTitle">Your next step is<br /><em>waiting.</em></h2><p class="modal-description">Sign in to continue building your portfolio and career profile.</p><form class="lead-form"><label>Email address<input type="email" required placeholder="you@example.com" /></label><button class="button button-dark" type="submit">Continue with email <span>→</span></button></form><small class="form-note">Prototype interaction only — account login will be connected to your backend.</small></template>
+    <template id="tpoModalTemplate"><div class="modal-eyebrow">FOR TRAINING &amp; PLACEMENT OFFICERS</div><h2 id="modalTitle">Your students’<br /><em>momentum</em>, visible.</h2><p class="modal-description">Open your TPO workspace to see enrollment and progress for students from your college only. Payment ids stay hidden.</p><form class="lead-form"><label>Your name<input type="text" name="name" required placeholder="Name" /></label><label>Official email<input type="email" name="email" required placeholder="name@college.edu" /></label><label>College name<input type="text" name="college" required placeholder="Your institution" /></label><label>Workspace access code<input type="password" name="accessCode" required placeholder="Provided by Gradflow" autocomplete="off" /></label><button class="button button-dark" type="submit">Open TPO workspace <span>→</span></button></form></template>
+    <template id="loginModalTemplate"><div class="modal-eyebrow">WELCOME BACK</div><h2 id="modalTitle">Your next step is<br /><em>waiting.</em></h2><p class="modal-description">Sign in with the email and password you set when you paid for a course. That restores paid access on this device.</p><form class="lead-form"><label>College email<input type="email" name="email" required placeholder="you@college.edu" autocomplete="username" /></label><label>Password<input type="password" name="password" required placeholder="Your course password" autocomplete="current-password" /></label><button class="button button-dark" type="submit">Sign in <span>→</span></button></form><small class="form-note">New here? Open a course, pay, and choose a password at checkout.</small></template>
     <template id="demoModalTemplate"><div class="modal-eyebrow">A LOOK INSIDE</div><h2 id="modalTitle">Learning that ends<br />in <em>evidence.</em></h2><div class="demo-window"><div><span></span><span></span><span></span></div><strong>PROJECT SPRINT #03</strong><p>Build a project with a real brief, structured checkpoints and useful feedback.</p><div class="demo-check"><span>✓</span> Your work, ready to show</div></div><button class="button button-lime full-button" data-scroll="#courses">Explore pathways <span>→</span></button></template>
 
     <div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><div><strong>You’re on the list.</strong><small>We’ll be in touch with the next steps.</small></div></div>

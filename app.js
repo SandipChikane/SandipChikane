@@ -61,18 +61,39 @@ document.addEventListener('submit', (event) => {
   event.preventDefault();
   if (modalContent.dataset.type === 'login') {
     const email = event.target.querySelector('input[type="email"]')?.value.trim();
-    if (email) window.GradflowEnrollment.setStudentEmail(email);
-    window.location.href = 'dashboard.html';
+    const password = event.target.querySelector('input[type="password"]')?.value;
+    const submit = event.target.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    window.GradflowEnrollment.studentLogin({ email, password }).then((result) => {
+      if (!result.ok) {
+        if (submit) submit.disabled = false;
+        showToast('Could not sign in.', result.data.error || 'Check your email and password.');
+        return;
+      }
+      window.location.href = 'dashboard.html';
+    }).catch(() => {
+      if (submit) submit.disabled = false;
+      showToast('Could not sign in.', 'Check your email and password, then try again.');
+    });
     return;
   }
   if (modalContent.dataset.type === 'tpo') {
     const name = event.target.querySelector('[name="name"]')?.value.trim();
     const email = event.target.querySelector('[name="email"]')?.value.trim();
     const college = event.target.querySelector('[name="college"]')?.value.trim();
+    const accessCode = event.target.querySelector('[name="accessCode"]')?.value.trim();
     if (name) localStorage.setItem('gradflowTpoName', name);
     if (email) localStorage.setItem('gradflowTpoEmail', email);
     if (college) localStorage.setItem('gradflowTpoCollege', college);
-    window.location.href = 'tpo.html';
+    window.GradflowEnrollment.tpoSession({ name, email, college, accessCode }).then((result) => {
+      if (!result.ok) {
+        showToast('TPO workspace stayed locked.', result.data.error || 'Check the access code.');
+        return;
+      }
+      window.location.href = 'tpo.html';
+    }).catch(() => {
+      showToast('TPO workspace stayed locked.', 'Could not open a TPO session.');
+    });
     return;
   }
   closeModal();
@@ -119,11 +140,107 @@ document.getElementById('prevStory')?.addEventListener('click', () => {
   storiesTrack.style.transform = `translateX(-${storyPosition * 28}%)`;
 });
 
-document.querySelectorAll('[data-access-for]').forEach((row) => {
-  const enrolled = window.GradflowEnrollment.isEnrolled(row.dataset.accessFor);
-  const pill = row.querySelector('.access-pill');
-  if (!pill) return;
-  pill.classList.toggle('locked', !enrolled);
-  pill.classList.toggle('enrolled', enrolled);
-  pill.textContent = enrolled ? 'Enrolled' : 'Locked';
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function syncAccessPills() {
+  document.querySelectorAll('[data-access-for]').forEach((row) => {
+    const enrolled = window.GradflowEnrollment.isEnrolled(row.dataset.accessFor);
+    const pill = row.querySelector('.access-pill');
+    if (!pill) return;
+    pill.classList.toggle('locked', !enrolled);
+    pill.classList.toggle('enrolled', enrolled);
+    pill.textContent = enrolled ? 'Enrolled' : 'Locked';
+    const price = row.querySelector('.course-price');
+    const course = window.GradflowEnrollment.courseById(row.dataset.accessFor);
+    if (price && course) price.textContent = window.GradflowEnrollment.formatPrice(course.price);
+  });
+}
+
+function courseVisualClass(category) {
+  if (category === 'tech') return 'visual-dev';
+  if (category === 'design') return 'visual-design';
+  return 'visual-analytics';
+}
+
+function renderLandingCourses() {
+  const grid = document.getElementById('courseGrid') || document.querySelector('.course-grid');
+  if (!grid) return;
+  const courses = (window.GradflowEnrollment.catalog || []).filter((course) => course.status !== 'archived');
+  const count = document.getElementById('courseCount');
+  if (count) count.textContent = String(courses.length).padStart(2, '0');
+  const seeAll = document.querySelector('.see-all');
+  if (seeAll) seeAll.hidden = courses.length === 0;
+
+  grid.replaceChildren();
+  if (!courses.length) {
+    const empty = document.createElement('p');
+    empty.className = 'course-empty';
+    empty.id = 'courseEmpty';
+    empty.textContent = 'Published courses will appear here. Add one in the admin portal, then set it to Published.';
+    grid.appendChild(empty);
+    return;
+  }
+
+  const featuredId = courses.find((course) => course.featured)?.id || courses[0].id;
+  courses.forEach((course) => {
+    const featured = course.id === featuredId;
+    const category = course.category || 'analytics';
+    const image = course.coverImageUrl || course.thumbnailUrl;
+    const tools = (course.tools || []).map((tool) => `<span>${escapeHtml(tool)}</span>`).join('');
+    const card = document.createElement('article');
+    card.className = featured ? 'course-card featured' : 'course-card compact-card';
+    card.dataset.category = category;
+    if (featured) {
+      card.innerHTML = `
+        <div class="course-visual ${courseVisualClass(category)}">
+          ${course.featured ? '<span class="course-tag">FEATURED</span>' : ''}
+          ${image ? `<img src="${escapeHtml(image)}" alt="">` : '<span class="visual-symbol">▥</span>'}
+        </div>
+        <div class="course-body">
+          <div class="course-meta"><span>${escapeHtml(category.toUpperCase())}</span><span>${escapeHtml(course.weeks || 0)} WEEKS</span></div>
+          <h3>${escapeHtml(course.name)}</h3>
+          <p>${escapeHtml(course.blurb || '')}</p>
+          <div class="access-row" data-access-for="${escapeHtml(course.id)}">
+            <span class="course-price">${window.GradflowEnrollment.formatPrice(course.price)}</span>
+            <span class="access-pill locked">Locked</span>
+          </div>
+          <div class="course-footer">
+            <div class="tool-badges">${tools}</div>
+            <button class="round-arrow" data-course-id="${escapeHtml(course.id)}" data-course="${escapeHtml(course.name)}" aria-label="Open ${escapeHtml(course.name)}">↗</button>
+          </div>
+        </div>`;
+    } else {
+      card.innerHTML = `
+        <div class="compact-icon">＋</div>
+        <div>
+          <div class="course-meta"><span>${escapeHtml(category.toUpperCase())}</span><span>${escapeHtml(course.weeks || 0)} WEEKS</span></div>
+          <h3>${escapeHtml(course.name)}</h3>
+          <p>${escapeHtml(course.blurb || '')}</p>
+          <div class="access-row" data-access-for="${escapeHtml(course.id)}">
+            <span class="course-price">${window.GradflowEnrollment.formatPrice(course.price)}</span>
+            <span class="access-pill locked">Locked</span>
+          </div>
+        </div>
+        <button class="round-arrow" data-course-id="${escapeHtml(course.id)}" data-course="${escapeHtml(course.name)}" aria-label="Open ${escapeHtml(course.name)}">↗</button>`;
+    }
+    grid.appendChild(card);
+  });
+  syncAccessPills();
+}
+
+syncAccessPills();
+
+window.GradflowEnrollment.publicConfig?.().then((config) => {
+  const copy = document.getElementById('announcementCopy');
+  if (copy && config?.announcement) copy.textContent = config.announcement;
+});
+
+window.GradflowEnrollment.loadPublishedCatalog?.().then(() => {
+  renderLandingCourses();
 });

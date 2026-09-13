@@ -342,6 +342,17 @@
   }
 }
 
+.student-chip #tpoLogout,
+.student-chip #studentLogout {
+  border: 0;
+  background: transparent;
+  font: 11px var(--dash-sans, inherit);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  color: inherit;
+}
+
 @media (max-width: 680px) {
   .privacy-card {
     margin-top: 22px;

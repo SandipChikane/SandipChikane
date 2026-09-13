@@ -301,6 +301,10 @@ async function mergeRemoteEnrollments() {
   if (!window.GradflowEnrollment?.tpoEnrollments) return;
   try {
     const result = await window.GradflowEnrollment.tpoEnrollments(college);
+    if (result.status === 401) {
+      showToast('Workspace locked.', 'Open the TPO workspace from the landing page with your access code.');
+      return;
+    }
     if (!result.ok) return;
     const remote = result.data.enrollments || [];
     remote.forEach((row, index) => {
@@ -327,6 +331,18 @@ async function mergeRemoteEnrollments() {
 if (collegeStudents.length === 0) {
   document.getElementById('kpiEnrolledHint').textContent = `No Gradflow enrollments from ${college} yet`;
 }
+
+document.getElementById('tpoLogout')?.addEventListener('click', async () => {
+  try {
+    if (window.GradflowEnrollment?.tpoLogout) {
+      await window.GradflowEnrollment.tpoLogout();
+    }
+  } finally {
+    localStorage.removeItem('gradflowTpoCollege');
+    localStorage.removeItem('gradflowTpoName');
+    window.GradflowEnrollment.goToLanding();
+  }
+});
 
 render();
 mergeRemoteEnrollments();

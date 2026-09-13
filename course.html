@@ -32,25 +32,45 @@
           <div class="eyebrow"><span class="spark">✦</span> Course locked</div>
           <h1 id="lockedTitle">This path is locked.</h1>
           <p id="lockedBlurb">Pay and enroll to open the lessons, project brief, and mentor space for this course.</p>
+          <div class="course-media" id="lockedMedia" hidden></div>
           <ul class="check-list">
             <li><span>✓</span> Full module list and current sprint</li>
             <li><span>✓</span> Guided project you can show recruiters</li>
-            <li><span>✓</span> Access stays saved after Razorpay verifies payment</li>
+            <li><span>✓</span> Sign in later with the password you set at checkout</li>
           </ul>
         </div>
-        <form class="course-pay-card" id="enrollForm">
-          <p class="mini-kicker">PAY AND ENROLL</p>
-          <strong class="course-price-lg" id="lockedPrice">₹0</strong>
-          <p class="course-pay-note" id="lockedMeta">One-time course fee</p>
-          <label>College email
-            <input id="enrollEmail" type="email" name="email" required placeholder="you@college.edu" autocomplete="email" />
-          </label>
-          <label>College
-            <input id="enrollCollege" type="text" name="college" required placeholder="VIT Vellore" autocomplete="organization" />
-          </label>
-          <button class="button button-lime full-button" id="payButton" type="submit" disabled>Checking payment setup…</button>
-          <small class="form-note" id="payNote">Razorpay Checkout opens for this payment. Card details stay with Razorpay. TPOs never see payment data.</small>
-        </form>
+        <div class="course-lock-forms">
+          <form class="course-pay-card" id="enrollForm">
+            <p class="mini-kicker">PAY AND ENROLL</p>
+            <strong class="course-price-lg" id="lockedPrice">₹0</strong>
+            <p class="course-pay-note" id="lockedMeta">One-time course fee</p>
+            <label>College email
+              <input id="enrollEmail" type="email" name="email" required placeholder="you@college.edu" autocomplete="email" />
+            </label>
+            <label>College
+              <input id="enrollCollege" type="text" name="college" required placeholder="VIT Vellore" autocomplete="organization" />
+            </label>
+            <label>Password for later sign-in
+              <input id="enrollPassword" type="password" name="password" required minlength="8" placeholder="At least 8 characters" autocomplete="new-password" />
+            </label>
+            <label>Confirm password
+              <input id="enrollPasswordConfirm" type="password" name="passwordConfirm" required minlength="8" placeholder="Repeat password" autocomplete="new-password" />
+            </label>
+            <button class="button button-lime full-button" id="payButton" type="submit" disabled>Checking payment setup…</button>
+            <small class="form-note" id="payNote">Razorpay Checkout opens for this payment. Card details stay with Razorpay. Your password is stored as a hash, never in checkout notes.</small>
+          </form>
+          <form class="course-pay-card" id="signInForm">
+            <p class="mini-kicker">ALREADY BOUGHT THIS?</p>
+            <p class="course-pay-note">Sign in with the email and password you set at checkout. This works on a new phone or browser.</p>
+            <label>College email
+              <input id="signInEmail" type="email" name="email" required placeholder="you@college.edu" autocomplete="username" />
+            </label>
+            <label>Password
+              <input id="signInPassword" type="password" name="password" required placeholder="Your course password" autocomplete="current-password" />
+            </label>
+            <button class="button button-dark full-button" id="signInButton" type="submit">Sign in and open course</button>
+          </form>
+        </div>
       </section>
 
       <section class="course-open" id="unlockedState" hidden>
@@ -67,7 +87,7 @@
           <aside class="enrolled-chip">
             <small>ACCESS</small>
             <strong>Paid and enrolled</strong>
-            <span id="enrolledOn">Saved on this device</span>
+            <span id="enrolledOn">Sign in on any device</span>
           </aside>
         </div>
         <div class="course-open-grid">
@@ -80,7 +100,9 @@
             <p class="mini-kicker" id="lessonType">LESSON</p>
             <h2 id="lessonTitle">Current lesson</h2>
             <p id="lessonCopy"></p>
+            <div class="course-media" id="lessonMedia" hidden></div>
             <p class="lesson-time" id="lessonTime"></p>
+            <div id="lessonResource" hidden></div>
           </article>
         </div>
       </section>
