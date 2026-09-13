@@ -132,8 +132,22 @@ function renderUnlocked() {
   missingState.hidden = true;
 }
 
+function overallStats() {
+  const lessons = flattenLessons(course.sections || []);
+  const minutesTotal = lessons.reduce((sum, lesson) => sum + Math.max(0, Number(lesson.minutes) || 0), 0);
+  const progress = payload.progress;
+  if (!progress) {
+    return { completed: 0, total: lessons.length, percent: 0, minutesTotal, sections: [] };
+  }
+  return {
+    ...progress,
+    total: progress.total || lessons.length,
+    minutesTotal: progress.minutesTotal || minutesTotal,
+  };
+}
+
 function progressChip() {
-  const progress = payload.progress || { completed: 0, total: 0, percent: 0, minutesTotal: 0 };
+  const progress = overallStats();
   const record = window.GradflowEnrollment.studentEnrollments()[course.id];
   const enrolledOn = record?.enrolledAt
     ? `Enrolled ${new Date(record.enrolledAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
@@ -157,7 +171,7 @@ function progressBar(percent, label) {
 }
 
 function courseHomeHtml() {
-  const progress = payload.progress || { completed: 0, total: 0, percent: 0, minutesTotal: 0 };
+  const progress = overallStats();
   const resume = payload.resume;
   const continueHref = resume?.lessonId
     ? courseHref({ section: resume.sectionSlug, lesson: resume.lessonId })
