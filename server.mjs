@@ -28,8 +28,9 @@ const routes = {
   'GET /api/public-config': () => handlers.publicConfig(),
   'POST /api/create-order': ({ body }) => handlers.createOrder(body),
   'POST /api/verify-payment': ({ body }) => handlers.verifyPayment(body),
-  'GET /api/enrollments': ({ query }) => handlers.enrollments(query),
-  'GET /api/tpo-enrollments': ({ query }) => handlers.tpoEnrollments(query),
+  'GET /api/enrollments': ({ req }) => handlers.enrollments(req),
+  'POST /api/tpo-session': ({ body }) => handlers.tpoSession(body),
+  'GET /api/tpo-enrollments': ({ req, query }) => handlers.tpoEnrollments(query, req),
   'POST /api/razorpay-webhook': ({ rawBody, signature }) => handlers.webhook({ rawBody, signature }),
 };
 
@@ -65,12 +66,13 @@ const server = createServer(async (req, res) => {
       const rawBody = req.method === 'POST' ? await readRawBody(req) : '';
       const body = rawBody ? JSON.parse(rawBody) : {};
       const result = await route({
+        req,
         query,
         body,
         rawBody,
         signature: req.headers['x-razorpay-signature'] || '',
       });
-      sendJson(res, result.status, result.body);
+      sendResult(res, result);
       return;
     }
 
@@ -100,7 +102,7 @@ async function serveStatic(pathname, res) {
     return;
   }
 
-  const blocked = ['.env', '.env.local', '/lib/', '/api/', '/node_modules/', '/.git/'];
+  const blocked = ['.env', '.env.local', '/lib/', '/api/', '/node_modules/', '/.git/', '/supabase/'];
   if (blocked.some((part) => requested === part || requested.includes(part))) {
     res.statusCode = 404;
     res.end('Not found');

@@ -69,10 +69,19 @@ document.addEventListener('submit', (event) => {
     const name = event.target.querySelector('[name="name"]')?.value.trim();
     const email = event.target.querySelector('[name="email"]')?.value.trim();
     const college = event.target.querySelector('[name="college"]')?.value.trim();
+    const accessCode = event.target.querySelector('[name="accessCode"]')?.value.trim();
     if (name) localStorage.setItem('gradflowTpoName', name);
     if (email) localStorage.setItem('gradflowTpoEmail', email);
     if (college) localStorage.setItem('gradflowTpoCollege', college);
-    window.location.href = 'tpo.html';
+    window.GradflowEnrollment.tpoSession({ name, email, college, accessCode }).then((result) => {
+      if (!result.ok) {
+        showToast('TPO workspace stayed locked.', result.data.error || 'Check the access code.');
+        return;
+      }
+      window.location.href = 'tpo.html';
+    }).catch(() => {
+      showToast('TPO workspace stayed locked.', 'Could not open a TPO session.');
+    });
     return;
   }
   closeModal();

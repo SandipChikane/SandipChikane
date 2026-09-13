@@ -301,6 +301,10 @@ async function mergeRemoteEnrollments() {
   if (!window.GradflowEnrollment?.tpoEnrollments) return;
   try {
     const result = await window.GradflowEnrollment.tpoEnrollments(college);
+    if (result.status === 401) {
+      showToast('Workspace locked.', 'Open the TPO workspace from the landing page with your access code.');
+      return;
+    }
     if (!result.ok) return;
     const remote = result.data.enrollments || [];
     remote.forEach((row, index) => {

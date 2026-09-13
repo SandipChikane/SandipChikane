@@ -35,7 +35,7 @@ Without keys, the site still renders. Checkout stays locked and the APIs return 
 
 ## Admin portal
 
-Open http://127.0.0.1:4173/admin/ and sign in with `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+Open http://127.0.0.1:4173/admin/ and sign in with `ADMIN_EMAIL` plus the password that matches `ADMIN_PASSWORD_HASH`.
 
 From there you can:
 
@@ -59,13 +59,30 @@ Student and TPO pages still never show payment ids.
 | --- | --- |
 | `POST /api/create-order` | Creates a Razorpay order for a known course |
 | `POST /api/verify-payment` | Checks the checkout signature, then upserts enrollment |
-| `GET /api/enrollments` | Returns that student’s paid courses, without payment ids |
-| `GET /api/tpo-enrollments` | Returns a college cohort for the TPO workspace, without payment ids |
+| `GET /api/enrollments` | Returns the signed-in student’s paid courses, without payment ids |
+| `POST /api/tpo-session` | Checks the TPO access code and sets a college-scoped cookie |
+| `GET /api/tpo-enrollments` | Returns that college’s cohort after the TPO cookie is set |
 | `GET /api/public-config` | Says whether keys are present. Never returns secrets |
 | `GET /api/catalog` | Published CMS courses for the public site |
 | `/api/admin/*` | Cookie-authenticated admin CMS, media, and enrollment tools |
 
-The browser caches verified enrollments in `localStorage` so a reload still works if the API is briefly down. It does not mark a course paid until Razorpay verification succeeds.
+The browser caches verified enrollments in `localStorage` so a reload still works if the API is briefly down. It does not mark a course paid until Razorpay verification succeeds. `localStorage` never holds a password.
+
+## Where emails and passwords live
+
+Students do not have passwords. Paid access is proven by Razorpay, then an HttpOnly `gf_student` cookie.
+
+| Data | Stored | Not stored |
+| --- | --- | --- |
+| Admin email | Server env `ADMIN_EMAIL` | Browser, Supabase user table |
+| Admin password | `ADMIN_PASSWORD_HASH` (scrypt) in `.env.local` / Vercel env | Git, Supabase, localStorage |
+| Student email | Supabase `enrollments.student_email`, plus this browser’s `localStorage` | A password field |
+| Student password | Nowhere | Nowhere |
+| TPO name / email / college | This browser’s `localStorage` only | Supabase user table |
+| TPO workspace code | Server env `TPO_ACCESS_CODE` | Student records |
+| Payment ids | Supabase `enrollments`, admin portal only | TPO and student APIs |
+
+`.env.local` is gitignored. Anon Supabase clients cannot read enrollments. Admin and TPO sessions are signed cookies, not JWTs in localStorage.
 
 ## Deploy on Vercel
 

@@ -204,8 +204,11 @@ function cacheEnrollment(record) {
   return all[key][record.courseId];
 }
 
-async function apiRequest(url, options) {
-  const response = await fetch(url, options);
+async function apiRequest(url, options = {}) {
+  const response = await fetch(url, {
+    credentials: 'same-origin',
+    ...options,
+  });
   const data = await response.json().catch(() => ({}));
   return { ok: response.ok, status: response.status, data };
 }
@@ -247,7 +250,7 @@ async function refreshFromServer() {
   const email = getStudentEmail();
   if (!email) return { ok: false, configured: false, enrollments: [] };
   try {
-    const result = await apiRequest(`/api/enrollments?email=${encodeURIComponent(email)}`);
+    const result = await apiRequest('/api/enrollments');
     if (result.status === 503) return { ok: false, configured: false, enrollments: [] };
     if (!result.ok) return { ok: false, configured: true, enrollments: [] };
     const rows = result.data.enrollments || [];
@@ -271,6 +274,14 @@ async function verifyPayment(payload) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+  });
+}
+
+async function tpoSession({ name, email, college, accessCode }) {
+  return apiRequest('/api/tpo-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, college, accessCode }),
   });
 }
 
@@ -317,6 +328,7 @@ window.GradflowEnrollment = {
   refreshFromServer,
   createOrder,
   verifyPayment,
+  tpoSession,
   tpoEnrollments,
   loadRazorpay,
   formatPrice,

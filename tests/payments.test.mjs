@@ -115,6 +115,8 @@ describe('handlers with credentials', () => {
     SUPABASE_SERVICE_ROLE_KEY: 'service-role',
     RAZORPAY_KEY_ID: 'rzp_test_demo',
     RAZORPAY_KEY_SECRET: 'test_secret',
+    ADMIN_SESSION_SECRET: 'test-session-secret',
+    TPO_ACCESS_CODE: 'campus-access-01',
   };
 
   it('rejects an unknown course', async () => {
@@ -220,9 +222,16 @@ describe('handlers with credentials', () => {
     assert.equal(result.body.paid, true);
     assert.equal(result.body.enrollment.courseId, 'data-analytics');
     assert.equal(JSON.stringify(result.body).includes('pay_123'), false);
+    assert.match(result.headers['Set-Cookie'], /gf_student=/);
   });
 
-  it('lists TPO enrollments without payment ids', async () => {
+  it('does not list enrollments from an email query alone', async () => {
+    const api = createHandlers({ env, fetch: async () => new Response('[]') });
+    const result = await api.enrollments({ headers: {} });
+    assert.equal(result.status, 401);
+  });
+
+  it('lists TPO enrollments without payment ids after a workspace sign-in', async () => {
     const api = createHandlers({
       env,
       fetch: async (url) => {
@@ -238,9 +247,18 @@ describe('handlers with credentials', () => {
         }]), { status: 200 });
       },
     });
-    const result = await api.tpoEnrollments({ college: 'VIT Vellore' });
+    const opened = await api.tpoSession({ college: 'VIT Vellore', accessCode: 'campus-access-01' });
+    assert.equal(opened.status, 200);
+    const req = { headers: { cookie: opened.headers['Set-Cookie'].split(';')[0] } };
+    const result = await api.tpoEnrollments({ college: 'VIT Vellore' }, req);
     assert.equal(result.status, 200);
     assert.equal(result.body.enrollments[0].studentEmail, 'aarav@vitstudent.ac.in');
     assert.equal(JSON.stringify(result.body).includes('razorpay'), false);
+  });
+
+  it('rejects a TPO listing without a workspace cookie', async () => {
+    const api = createHandlers({ env, fetch: async () => new Response('[]') });
+    const result = await api.tpoEnrollments({ college: 'VIT Vellore' }, { headers: {} });
+    assert.equal(result.status, 401);
   });
 });

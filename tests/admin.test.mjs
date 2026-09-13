@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { createAdminHandlers, adminEnrollment } from '../lib/admin-handlers.mjs';
-import { emailsMatch, passwordsMatch, signSession } from '../lib/admin-auth.mjs';
+import { emailsMatch, passwordsMatch, signSession, verifyAdminSecret } from '../lib/admin-auth.mjs';
+import { hashPassword } from '../lib/access-auth.mjs';
 import { seedPayloadFromCatalog, toPublicCourse, unwrapSetting } from '../lib/cms.mjs';
 import { publicEnrollment } from '../lib/supabase.mjs';
 import { SEED_COURSES } from '../lib/seed-courses.mjs';
@@ -37,6 +38,23 @@ describe('admin auth', () => {
     assert.equal(passwordsMatch('abc', 'xyz'), false);
     assert.equal(emailsMatch('Admin@Gradflow.local', 'admin@gradflow.local'), true);
     assert.equal(signSession('1', 'secret').length, 64);
+  });
+
+  it('accepts a scrypt password hash and ignores leftover plaintext', async () => {
+    const hashed = hashPassword('correct-horse');
+    const api = createAdminHandlers({
+      env: {
+        ADMIN_EMAIL: 'admin@gradflow.local',
+        ADMIN_PASSWORD: 'should-not-be-used',
+        ADMIN_PASSWORD_HASH: hashed,
+        ADMIN_SESSION_SECRET: 'secret',
+      },
+    });
+    assert.equal(verifyAdminSecret('correct-horse', { ADMIN_PASSWORD_HASH: hashed }), true);
+    const result = await api.login({}, { email: 'admin@gradflow.local', password: 'correct-horse' });
+    assert.equal(result.status, 200);
+    const rejected = await api.login({}, { email: 'admin@gradflow.local', password: 'should-not-be-used' });
+    assert.equal(rejected.status, 401);
   });
 });
 

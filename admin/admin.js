@@ -98,13 +98,15 @@ function showApp() {
 document.getElementById('loginForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   try {
+    const passwordInput = document.getElementById('loginPassword');
     state.session = await api('/api/admin/login', {
       method: 'POST',
       body: {
         email: document.getElementById('loginEmail').value,
-        password: document.getElementById('loginPassword').value,
+        password: passwordInput.value,
       },
     });
+    passwordInput.value = '';
     showApp();
     location.hash = '#overview';
     await render();
