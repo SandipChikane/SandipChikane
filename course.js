@@ -1,6 +1,7 @@
 const params = new URLSearchParams(window.location.search);
 let course = window.GradflowEnrollment.courseById(params.get('course'))
   || window.GradflowEnrollment.courseByName(params.get('course'));
+let payload = { course: null, progress: null, resume: null, preview: false };
 const lockedState = document.getElementById('lockedState');
 const unlockedState = document.getElementById('unlockedState');
 const missingState = document.getElementById('missingState');
@@ -24,42 +25,347 @@ function setPayBusy(busy, label) {
   payButton.textContent = label;
 }
 
-function renderUnlocked() {
-  const record = window.GradflowEnrollment.studentEnrollments()[course.id];
-  document.title = `${course.name} — Gradflow`;
-  document.getElementById('openTitle').innerHTML = `${course.name.replace(' ', '<br />')}`;
-  document.getElementById('openBlurb').textContent = `${course.blurb} Your project: ${course.project}.`;
-  if (record?.enrolledAt) {
-    const enrolledOn = new Date(record.enrolledAt);
-    document.getElementById('enrolledOn').textContent = `Enrolled ${enrolledOn.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function formatDuration(minutes) {
+  const value = Math.max(0, Number(minutes) || 0);
+  if (!value) return '0 min';
+  if (value < 60) return `${value} min`;
+  const hours = Math.round((value / 60) * 10) / 10;
+  return `${hours} Hour${hours === 1 ? '' : 's'}`;
+}
+
+function flattenLessons(sections = []) {
+  const out = [];
+  for (const section of sections || []) {
+    for (const module of section.modules || []) {
+      for (const lesson of module.lessons || []) {
+        out.push({
+          ...lesson,
+          sectionId: section.id,
+          sectionSlug: section.slug,
+          sectionTitle: section.title,
+          moduleId: module.id,
+          moduleTitle: module.title,
+        });
+      }
+    }
   }
-  const modules = document.getElementById('moduleList');
-  modules.replaceChildren();
-  (course.modules || []).forEach((module) => {
-    const item = document.createElement('li');
-    item.innerHTML = `<b>${module.number}</b><span>${module.title}</span><span>${module.time}</span>`;
-    modules.appendChild(item);
+  return out;
+}
+
+function continueLabel(name, { started = false, allDone = false } = {}) {
+  const title = String(name || 'learning').trim() || 'learning';
+  if (allDone) return `Review ${title}`;
+  if (started) return `Continue ${title}`;
+  return `Start ${title}`;
+}
+
+function sectionProgress(section) {
+  return (payload.progress?.sections || []).find((item) => item.sectionId === section.id || item.slug === section.slug)
+    || { completed: 0, total: flattenLessons([section]).length, percent: 0 };
+}
+
+function sectionAction(section) {
+  const stats = sectionProgress(section);
+  return continueLabel(section.title, {
+    started: stats.completed > 0,
+    allDone: stats.total > 0 && stats.completed >= stats.total,
   });
-  const lesson = course.lesson || {};
-  document.getElementById('lessonType').textContent = `${lesson.type || 'LESSON'} · MODULE ${lesson.number || ''}`;
-  document.getElementById('lessonTitle').textContent = lesson.title || course.name;
-  document.getElementById('lessonCopy').textContent = lesson.copy || course.blurb || '';
-  document.getElementById('lessonTime').textContent = `${lesson.minutes || 0} min · ${(course.tools || []).join(' · ')}`;
-  fillMedia('lessonMedia', lesson.videoUrl, lesson.imageUrl);
-  renderLessonResource(lesson);
+}
+
+function courseHref(extra = {}) {
+  return window.GradflowEnrollment.courseUrl(course.id, extra);
+}
+
+function renderUnlocked() {
+  document.title = `${course.name} — Gradflow`;
+  const workspace = document.getElementById('courseWorkspace');
+  const sectionKey = params.get('section') || '';
+  const lessonId = params.get('lesson') || '';
+  const sections = course.sections || [];
+  const section = sections.find((item) => item.slug === sectionKey || item.id === sectionKey) || null;
+  const lesson = lessonId
+    ? flattenLessons(section ? [section] : sections).find((item) => String(item.id) === String(lessonId))
+    : null;
+
+  if (sectionKey && !section) {
+    workspace.innerHTML = `
+      <p class="course-missing">This learning section is not available.
+      <a href="${escapeHtml(courseHref())}">Back to ${escapeHtml(course.name)}</a></p>`;
+    lockedState.hidden = true;
+    unlockedState.hidden = false;
+    missingState.hidden = true;
+    return;
+  }
+  if (lessonId && !lesson) {
+    workspace.innerHTML = `
+      <p class="course-missing">This lesson is not available.
+      <a href="${escapeHtml(section ? courseHref({ section: section.slug }) : courseHref())}">Back</a></p>`;
+    lockedState.hidden = true;
+    unlockedState.hidden = false;
+    missingState.hidden = true;
+    return;
+  }
+
+  if (lesson) {
+    workspace.innerHTML = lessonViewHtml(section || sections.find((item) => item.id === lesson.sectionId), lesson);
+  } else if (section) {
+    workspace.innerHTML = sectionViewHtml(section);
+  } else {
+    workspace.innerHTML = courseHomeHtml();
+  }
+
+  bindUnlockedActions();
+  if (lesson) {
+    fillMedia('lessonMedia', lesson.videoUrl, lesson.imageUrl);
+    renderLessonResource(lesson);
+  }
   lockedState.hidden = true;
   unlockedState.hidden = false;
   missingState.hidden = true;
 }
 
+function progressChip() {
+  const progress = payload.progress || { completed: 0, total: 0, percent: 0, minutesTotal: 0 };
+  const record = window.GradflowEnrollment.studentEnrollments()[course.id];
+  const enrolledOn = record?.enrolledAt
+    ? `Enrolled ${new Date(record.enrolledAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
+    : 'Sign in on any device';
+  return `
+    <aside class="enrolled-chip">
+      <small>${payload.preview ? 'ADMIN PREVIEW' : 'ACCESS'}</small>
+      <strong>${payload.preview ? 'Draft preview' : 'Paid and enrolled'}</strong>
+      <span>${escapeHtml(enrolledOn)}</span>
+      <span>${progress.completed} / ${progress.total} lessons · ${formatDuration(progress.minutesTotal)}</span>
+    </aside>`;
+}
+
+function progressBar(percent, label) {
+  const value = Math.max(0, Math.min(100, Number(percent) || 0));
+  return `
+    <div class="section-progress" role="img" aria-label="${escapeHtml(label || 'Progress')} ${value} percent">
+      <div class="section-progress-track"><i style="width:${value}%"></i></div>
+      <strong>${value}%</strong>
+    </div>`;
+}
+
+function courseHomeHtml() {
+  const progress = payload.progress || { completed: 0, total: 0, percent: 0, minutesTotal: 0 };
+  const resume = payload.resume;
+  const continueHref = resume?.lessonId
+    ? courseHref({ section: resume.sectionSlug, lesson: resume.lessonId })
+    : '';
+  const continueText = resume?.label || continueLabel(course.name);
+  const sections = course.sections || [];
+  return `
+    <div class="course-open-hero">
+      <div>
+        <div class="eyebrow"><span class="spark">✦</span> ${payload.preview ? 'Admin preview' : 'You’re enrolled'}</div>
+        <h1>${escapeHtml(course.name)}</h1>
+        <p>${escapeHtml(course.blurb || '')}${course.project ? ` Your project: ${escapeHtml(course.project)}.` : ''}</p>
+        <div class="course-overall">
+          ${progressBar(progress.percent, 'Overall course progress')}
+          <p class="course-overall-meta">${progress.completed} of ${progress.total} lessons complete · ${formatDuration(progress.minutesTotal)} total</p>
+        </div>
+        <div class="hero-actions">
+          ${continueHref
+            ? `<a class="button button-lime" id="continueCourse" href="${escapeHtml(continueHref)}">${escapeHtml(continueText)} <span>→</span></a>`
+            : `<span class="button button-lime" aria-disabled="true">No lessons yet</span>`}
+          <a class="arrow-link" href="dashboard.html">Go to learning space <span>↗</span></a>
+        </div>
+      </div>
+      ${progressChip()}
+    </div>
+    <section class="section-card-wrap">
+      <p class="mini-kicker">LEARNING SECTIONS</p>
+      <h2>Choose a <em>path.</em></h2>
+      <div class="section-card-grid">
+        ${sections.map((section) => sectionCardHtml(section)).join('') || '<p class="course-empty">No published learning sections yet.</p>'}
+      </div>
+    </section>`;
+}
+
+function sectionCardHtml(section) {
+  const stats = sectionProgress(section);
+  const minutes = section.estimatedMinutes || section.minutes || stats.minutes || 0;
+  const action = sectionAction(section);
+  const resumeLesson = nextLessonInSection(section);
+  const href = resumeLesson
+    ? courseHref({ section: section.slug, lesson: resumeLesson.id })
+    : courseHref({ section: section.slug });
+  const thumb = section.thumbnailUrl
+    ? `<img src="${escapeHtml(section.thumbnailUrl)}" alt="">`
+    : `<span class="section-card-mark">${escapeHtml(section.icon || section.title.slice(0, 1) || '•')}</span>`;
+  return `
+    <article class="section-card">
+      <a class="section-card-media" href="${escapeHtml(courseHref({ section: section.slug }))}">${thumb}</a>
+      <div class="section-card-body">
+        <h3><a href="${escapeHtml(courseHref({ section: section.slug }))}">${escapeHtml(section.title)}</a></h3>
+        <p>${escapeHtml(section.shortDescription || '')}</p>
+        <ul class="section-card-meta">
+          <li>${section.moduleCount ?? (section.modules || []).length} Modules</li>
+          <li>${section.lessonCount ?? flattenLessons([section]).length} Lessons</li>
+          <li>${escapeHtml(section.durationLabel || formatDuration(minutes))}</li>
+        </ul>
+        ${progressBar(stats.percent, section.title)}
+        <a class="button button-lime button-sm" href="${escapeHtml(href)}">${escapeHtml(action)} <span>→</span></a>
+      </div>
+    </article>`;
+}
+
+function nextLessonInSection(section) {
+  const lessons = flattenLessons([section]);
+  const done = completedLessonIds();
+  return lessons.find((lesson) => !done.has(String(lesson.id))) || lessons[0] || null;
+}
+
+function sectionViewHtml(section) {
+  const stats = sectionProgress(section);
+  const minutes = section.estimatedMinutes || section.minutes || stats.minutes || 0;
+  const resumeLesson = nextLessonInSection(section);
+  const action = payload.resume?.sectionId === section.id
+    ? (payload.resume.sectionLabel || sectionAction(section))
+    : sectionAction(section);
+  const href = resumeLesson
+    ? courseHref({ section: section.slug, lesson: resumeLesson.id })
+    : courseHref({ section: section.slug });
+  return `
+    <nav class="course-crumb"><a href="${escapeHtml(courseHref())}">${escapeHtml(course.name)}</a><span>/</span><span>${escapeHtml(section.title)}</span></nav>
+    <div class="course-open-hero">
+      <div>
+        <div class="eyebrow"><span class="spark">✦</span> Learning section</div>
+        <h1>${escapeHtml(section.title)}</h1>
+        <p>${escapeHtml(section.fullDescription || section.shortDescription || '')}</p>
+        <div class="course-overall">
+          ${progressBar(stats.percent, section.title)}
+          <p class="course-overall-meta">${stats.completed} of ${stats.total} lessons · ${escapeHtml(section.durationLabel || formatDuration(minutes))} · ${section.moduleCount ?? (section.modules || []).length} modules</p>
+        </div>
+        <div class="hero-actions">
+          <a class="button button-lime" href="${escapeHtml(href)}">${escapeHtml(action)} <span>→</span></a>
+          <a class="arrow-link" href="${escapeHtml(courseHref())}">All sections <span>←</span></a>
+        </div>
+      </div>
+      ${progressChip()}
+    </div>
+    <section class="section-syllabus">
+      ${(section.modules || []).map((module, moduleIndex) => moduleBlockHtml(section, module, moduleIndex)).join('') || '<p class="course-empty">No modules in this section yet.</p>'}
+    </section>`;
+}
+
+function lessonState(lesson, section) {
+  if (completedLessonIds().has(String(lesson.id))) return 'done';
+  const next = section ? nextLessonInSection(section) : null;
+  if (next && String(next.id) === String(lesson.id)) return 'current';
+  if (payload.resume?.lessonId && String(payload.resume.lessonId) === String(lesson.id)) return 'current';
+  return 'todo';
+}
+
+function completedLessonIds() {
+  return new Set((payload.progress?.completedIds || []).map((id) => String(id)));
+}
+
+function moduleBlockHtml(section, module, moduleIndex) {
+  const lessons = module.lessons || [];
+  const done = lessons.filter((lesson) => completedLessonIds().has(String(lesson.id))).length;
+  return `
+    <article class="module-block">
+      <header>
+        <p class="mini-kicker">Module ${escapeHtml(module.number || String(moduleIndex + 1))}</p>
+        <h2>${escapeHtml(module.title || `Module ${moduleIndex + 1}`)}</h2>
+        <small>${done} / ${lessons.length} complete</small>
+      </header>
+      <ol class="lesson-rail">
+        ${lessons.map((lesson) => {
+          const state = lessonState(lesson, section);
+          const mark = state === 'done' ? '✓' : state === 'current' ? '▶' : '○';
+          return `
+            <li class="is-${state}">
+              <a href="${escapeHtml(courseHref({ section: section.slug, lesson: lesson.id }))}">
+                <span class="lesson-mark" aria-hidden="true">${mark}</span>
+                <span>${escapeHtml(lesson.title)}</span>
+                <small>${lesson.minutes || 0} min</small>
+              </a>
+            </li>`;
+        }).join('')}
+      </ol>
+    </article>`;
+}
+
+function lessonViewHtml(section, lesson) {
+  const next = flattenLessons(section ? [section] : course.sections)
+    .slice(flattenLessons(section ? [section] : course.sections).findIndex((item) => item.id === lesson.id) + 1)[0];
+  return `
+    <nav class="course-crumb">
+      <a href="${escapeHtml(courseHref())}">${escapeHtml(course.name)}</a>
+      ${section ? `<span>/</span><a href="${escapeHtml(courseHref({ section: section.slug }))}">${escapeHtml(section.title)}</a>` : ''}
+      <span>/</span><span>${escapeHtml(lesson.title)}</span>
+    </nav>
+    <div class="course-open-grid">
+      <section class="section-syllabus compact-syllabus">
+        ${(section?.modules || []).map((module, moduleIndex) => moduleBlockHtml(section, module, moduleIndex)).join('')}
+      </section>
+      <article class="current-lesson" id="currentLesson">
+        <p class="mini-kicker" id="lessonType">${escapeHtml(lesson.type || 'LESSON')}${lesson.moduleTitle ? ` · ${escapeHtml(lesson.moduleTitle)}` : ''}</p>
+        <h2 id="lessonTitle">${escapeHtml(lesson.title)}</h2>
+        <p id="lessonCopy">${escapeHtml(lesson.copy || '')}</p>
+        <div class="course-media" id="lessonMedia" hidden></div>
+        <p class="lesson-time" id="lessonTime">${lesson.minutes || 0} min${(course.tools || []).length ? ` · ${escapeHtml(course.tools.join(' · '))}` : ''}</p>
+        <div id="lessonResource" hidden></div>
+        <div class="lesson-actions">
+          <button class="button button-lime" type="button" id="markComplete" data-lesson="${escapeHtml(lesson.id)}">Mark complete <span>✓</span></button>
+          ${next ? `<a class="arrow-link" href="${escapeHtml(courseHref({ section: next.sectionSlug, lesson: next.id }))}">Next lesson <span>→</span></a>` : `<a class="arrow-link" href="${escapeHtml(courseHref({ section: section?.slug }))}">Back to section <span>←</span></a>`}
+        </div>
+      </article>
+    </div>`;
+}
+
+function bindUnlockedActions() {
+  document.getElementById('markComplete')?.addEventListener('click', async (event) => {
+    const lessonId = event.currentTarget.dataset.lesson;
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const result = await window.GradflowEnrollment.markLessonComplete(course.id, lessonId);
+      if (!result.ok) throw new Error(result.data.error || 'Could not save progress.');
+      payload.progress = result.data.progress || payload.progress;
+      payload.resume = result.data.resume || payload.resume;
+      showToast('Progress saved.', 'This lesson is marked complete.');
+      params.set('lesson', lessonId);
+      if (payload.resume?.sectionSlug) params.set('section', params.get('section') || payload.resume.sectionSlug);
+      renderUnlocked();
+    } catch (error) {
+      showToast('Progress not saved.', error.message);
+      button.disabled = false;
+    }
+  });
+}
+
 function renderLocked(config = {}) {
   paymentsReady = Boolean(config.paymentsReady);
   document.title = `Locked · ${course.name} — Gradflow`;
-  document.getElementById('lockedTitle').innerHTML = `Unlock <em>${course.name}</em>`;
-  document.getElementById('lockedBlurb').textContent = `${course.blurb} Enroll to open the syllabus, current lesson, and ${course.project}.`;
+  document.getElementById('lockedTitle').innerHTML = `Unlock <em>${escapeHtml(course.name)}</em>`;
+  document.getElementById('lockedBlurb').textContent = `${course.blurb} Enroll to open every published learning section and ${course.project || 'the course project'}.`;
   document.getElementById('lockedPrice').textContent = window.GradflowEnrollment.formatPrice(course.price);
-  document.getElementById('lockedMeta').textContent = `${course.weeks} weeks · ${course.tools.join(' · ')}`;
+  document.getElementById('lockedMeta').textContent = `${course.weeks} weeks · ${(course.tools || []).join(' · ')}`;
   fillMedia('lockedMedia', course.promoVideoUrl, course.coverImageUrl || course.thumbnailUrl);
+  const list = document.getElementById('lockedSections');
+  if (list) {
+    const sections = course.sections || [];
+    list.replaceChildren();
+    sections.forEach((section) => {
+      const item = document.createElement('li');
+      item.textContent = section.title;
+      list.appendChild(item);
+    });
+    list.hidden = sections.length === 0;
+  }
   const email = window.GradflowEnrollment.getStudentEmail();
   const college = window.GradflowEnrollment.getStudentCollege();
   if (email) {
@@ -190,11 +496,15 @@ function fillMedia(id, videoUrl, imageUrl) {
 
 async function hydrateCourse() {
   const id = params.get('course') || course?.id;
-  if (!id) return;
+  if (!id) return null;
   const detail = await window.GradflowEnrollment.loadStudentCourse(id, {
     preview: params.get('preview') === '1',
+    section: params.get('section') || '',
   });
-  if (detail) course = detail;
+  if (!detail?.course) return detail;
+  course = detail.course;
+  payload = detail;
+  return detail;
 }
 
 async function boot() {
@@ -202,7 +512,13 @@ async function boot() {
   course = window.GradflowEnrollment.courseById(params.get('course'))
     || window.GradflowEnrollment.courseByName(params.get('course'));
   if (params.get('preview') === '1' && params.get('course')) {
-    await hydrateCourse();
+    const detail = await hydrateCourse();
+    if (!detail?.course) {
+      missingState.hidden = false;
+      lockedState.hidden = true;
+      unlockedState.hidden = true;
+      return;
+    }
   }
   if (!course) {
     missingState.hidden = false;
@@ -216,13 +532,21 @@ async function boot() {
     window.GradflowEnrollment.refreshFromServer(),
   ]);
 
-  if (course.preview) {
+  if (params.get('preview') === '1') {
+    await hydrateCourse();
     renderUnlocked();
     showToast('Admin preview.', 'Draft courses stay hidden from students until you publish.');
     return;
   }
   if (window.GradflowEnrollment.isEnrolled(course.id)) {
-    await hydrateCourse();
+    const detail = await hydrateCourse();
+    if (!detail?.course && params.get('section')) {
+      missingState.hidden = false;
+      missingState.innerHTML = `This learning section is not available. <a href="${escapeHtml(window.GradflowEnrollment.courseUrl(course.id))}">Back to the course</a>`;
+      lockedState.hidden = true;
+      unlockedState.hidden = true;
+      return;
+    }
     renderUnlocked();
     return;
   }
@@ -336,10 +660,6 @@ document.getElementById('signInForm')?.addEventListener('submit', async (event) 
   } finally {
     if (button) button.disabled = false;
   }
-});
-
-document.getElementById('startContent')?.addEventListener('click', () => {
-  document.getElementById('currentLesson').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
 document.addEventListener('contextmenu', (event) => {

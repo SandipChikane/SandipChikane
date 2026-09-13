@@ -34,10 +34,11 @@
           <p id="lockedBlurb">Pay and enroll to open the lessons, project brief, and mentor space for this course.</p>
           <div class="course-media" id="lockedMedia" hidden></div>
           <ul class="check-list">
-            <li><span>✓</span> Full module list and current sprint</li>
+            <li><span>✓</span> Every published learning section in this course</li>
             <li><span>✓</span> Guided project you can show recruiters</li>
             <li><span>✓</span> Sign in later with the password you set at checkout</li>
           </ul>
+          <ul class="locked-section-list" id="lockedSections" hidden></ul>
         </div>
         <div class="course-lock-forms">
           <form class="course-pay-card" id="enrollForm">
@@ -74,37 +75,7 @@
       </section>
 
       <section class="course-open" id="unlockedState" hidden>
-        <div class="course-open-hero">
-          <div>
-            <div class="eyebrow"><span class="spark">✦</span> You’re enrolled</div>
-            <h1 id="openTitle">Welcome back.</h1>
-            <p id="openBlurb">Your lessons, project, and progress are ready.</p>
-            <div class="hero-actions">
-              <button class="button button-lime" id="startContent" type="button">Open current lesson <span>→</span></button>
-              <a class="arrow-link" href="dashboard.html">Go to learning space <span>↗</span></a>
-            </div>
-          </div>
-          <aside class="enrolled-chip">
-            <small>ACCESS</small>
-            <strong>Paid and enrolled</strong>
-            <span id="enrolledOn">Sign in on any device</span>
-          </aside>
-        </div>
-        <div class="course-open-grid">
-          <section>
-            <p class="mini-kicker">SYLLABUS</p>
-            <h2>What you’ll <em>build.</em></h2>
-            <ol class="module-list" id="moduleList"></ol>
-          </section>
-          <article class="current-lesson" id="currentLesson">
-            <p class="mini-kicker" id="lessonType">LESSON</p>
-            <h2 id="lessonTitle">Current lesson</h2>
-            <p id="lessonCopy"></p>
-            <div class="course-media" id="lessonMedia" hidden></div>
-            <p class="lesson-time" id="lessonTime"></p>
-            <div id="lessonResource" hidden></div>
-          </article>
-        </div>
+        <div id="courseWorkspace"></div>
       </section>
     </main>
 
