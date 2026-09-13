@@ -102,6 +102,11 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (url.pathname === '/referrals' || url.pathname === '/referrals/') {
+      await serveStatic('/referrals.html', res);
+      return;
+    }
+
     if (url.pathname.startsWith('/r/')) {
       const code = decodeURIComponent(url.pathname.slice(3).split('/')[0] || '');
       const result = await handlers.visitReferral(req, {

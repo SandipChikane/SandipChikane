@@ -5,5 +5,11 @@
 .referral-stats strong{display:block;color:var(--dash-ink);font-size:16px;margin-top:4px}
 .referral-payout{display:grid;gap:10px;margin-top:18px}
 .referral-payout label{display:grid;gap:4px;font:10px var(--dash-mono);letter-spacing:.05em;color:#52645e}
-.referral-payout input,.referral-payout select{border:0;border-bottom:1px solid #aeb9b3;background:transparent;font:14px var(--dash-sans);padding:8px 0;color:var(--dash-ink)}
+.referral-payout input,.referral-payout select,.dash-auth-card select{border:0;border-bottom:1px solid #aeb9b3;background:transparent;font:14px var(--dash-sans);padding:8px 0;color:var(--dash-ink)}
 .referral-activity{margin-top:16px;font-size:13px;color:#5d7169}
+.referral-history{display:grid;gap:10px;margin-top:16px}
+.referral-page-grid{margin-top:8px}
+.access-pill.pending{background:#fbf2d8;color:#8a6a2b}
+.access-pill.available{background:var(--dash-lime);color:var(--dash-dark)}
+.access-pill.paid{background:#d8e7d8;color:#25493f}
+.access-pill.reversed{background:#f4d7cf;color:#8c4333}

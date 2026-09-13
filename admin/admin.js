@@ -92,13 +92,6 @@ function defaultReferral() {
   return {
     referralEnabled: true,
     referralActive: true,
-    commissionSource: 'GLOBAL_DEFAULT',
-    commissionType: 'PERCENTAGE',
-    fixedCommissionPaise: 0,
-    commissionPercentBps: 0,
-    maxCommissionPaise: 0,
-    minOrderValuePaise: 0,
-    holdingDays: '',
     campaignStart: '',
     campaignEnd: '',
   };
@@ -237,7 +230,19 @@ async function renderOverview() {
           <a href="#courses">Open course list</a>
         </div>
       </section>
-    </div>`;
+    </div>
+    ${(data.withdrawalNotices || []).length ? `
+      <section class="admin-panel" style="margin-top:18px">
+        <p class="mini-eyebrow">NEW WITHDRAWAL REQUEST</p>
+        ${(data.withdrawalNotices || []).map((row) => `
+          <p>
+            <strong>${escapeHtml(row.userEmail || '')}</strong>
+            <small>${moneyPaise(row.amountPaise)} · ${escapeHtml(row.method || '')} · ${escapeHtml(row.status || 'OPEN')} · ${escapeHtml(row.createdAt ? new Date(row.createdAt).toLocaleString('en-IN') : '')}</small>
+          </p>
+        `).join('')}
+        <div class="admin-actions"><a href="#withdrawals">Open withdrawal requests</a></div>
+      </section>
+    ` : ''}`;
 }
 
 async function renderCourses() {
@@ -528,8 +533,8 @@ function paintEditor() {
 
       <section class="admin-section">
         <p class="mini-eyebrow">REFERRAL SETTINGS</p>
-        <h2>Direct referral <em>commission.</em></h2>
-        <p class="admin-builder-copy">These values apply only to new qualifying purchases. Historical commissions keep their original snapshots.</p>
+        <h2>Direct referral <em>eligibility.</em></h2>
+        <p class="admin-builder-copy">Commission uses the fixed backend rate on the actual eligible amount paid. That rate cannot be changed here. These controls only decide whether this course can create a referral commission.</p>
         <div class="admin-form-grid">
           <label>Referral enabled
             <select name="referralEnabled">
@@ -543,23 +548,6 @@ function paintEditor() {
               <option value="false" ${!course.referral.referralActive ? 'selected' : ''}>No</option>
             </select>
           </label>
-          <label>Commission source
-            <select name="referralSource">
-              <option value="GLOBAL_DEFAULT" ${course.referral.commissionSource === 'GLOBAL_DEFAULT' ? 'selected' : ''}>Use global default</option>
-              <option value="PRODUCT_OVERRIDE" ${course.referral.commissionSource === 'PRODUCT_OVERRIDE' ? 'selected' : ''}>Product override</option>
-            </select>
-          </label>
-          <label>Commission type
-            <select name="referralType">
-              <option value="FIXED_AMOUNT" ${course.referral.commissionType === 'FIXED_AMOUNT' ? 'selected' : ''}>Fixed amount</option>
-              <option value="PERCENTAGE" ${course.referral.commissionType === 'PERCENTAGE' ? 'selected' : ''}>Percentage</option>
-            </select>
-          </label>
-          <label>Fixed commission (INR)<input name="referralFixedRupees" type="text" inputmode="decimal" value="${escapeHtml(paiseToRupeesField(course.referral.fixedCommissionPaise))}"></label>
-          <label>Commission percentage<input name="referralPercent" type="text" inputmode="decimal" value="${escapeHtml(percentFromBps(course.referral.commissionPercentBps))}"></label>
-          <label>Maximum commission (INR)<input name="referralMaxRupees" type="text" inputmode="decimal" value="${escapeHtml(paiseToRupeesField(course.referral.maxCommissionPaise))}"></label>
-          <label>Minimum eligible order (INR)<input name="referralMinOrderRupees" type="text" inputmode="decimal" value="${escapeHtml(paiseToRupeesField(course.referral.minOrderValuePaise))}"></label>
-          <label>Holding period (days)<input name="referralHoldingDays" type="number" min="0" placeholder="Use global default" value="${escapeHtml(course.referral.holdingDays ?? '')}"></label>
           <label>Campaign start<input name="referralCampaignStart" type="datetime-local" value="${escapeHtml((course.referral.campaignStart || '').slice(0, 16))}"></label>
           <label>Campaign end<input name="referralCampaignEnd" type="datetime-local" value="${escapeHtml((course.referral.campaignEnd || '').slice(0, 16))}"></label>
         </div>
@@ -950,13 +938,6 @@ function syncEditorForm() {
   course.referral = {
     referralEnabled: data.get('referralEnabled') === 'true',
     referralActive: data.get('referralActive') === 'true',
-    commissionSource: String(data.get('referralSource') || 'GLOBAL_DEFAULT'),
-    commissionType: String(data.get('referralType') || 'PERCENTAGE'),
-    fixedCommissionPaise: rupeesFieldToPaise(data.get('referralFixedRupees')),
-    commissionPercentBps: percentToBps(data.get('referralPercent')),
-    maxCommissionPaise: rupeesFieldToPaise(data.get('referralMaxRupees')),
-    minOrderValuePaise: rupeesFieldToPaise(data.get('referralMinOrderRupees')),
-    holdingDays: String(data.get('referralHoldingDays') || '').trim() === '' ? null : Number(data.get('referralHoldingDays')),
     campaignStart: String(data.get('referralCampaignStart') || ''),
     campaignEnd: String(data.get('referralCampaignEnd') || ''),
   };
@@ -1225,8 +1206,8 @@ async function renderSettings() {
       <label class="wide">Announcement banner<input name="announcement" value="${escapeHtml(settings.announcement || '')}" placeholder="Shown on the public landing page"></label>
       <section class="admin-section">
         <p class="mini-eyebrow">REFERRAL PROGRAM</p>
-        <h2>Global referral <em>defaults.</em></h2>
-        <p class="admin-builder-copy">Changing these values never rewrites historical commissions or order prices. Payment secrets are not stored here.</p>
+        <h2>Referral <em>operations.</em></h2>
+        <p class="admin-builder-copy">Commission is always ${escapeHtml(settings.referralCommissionRateLabel || '20%')} of the actual eligible amount paid. That rate is a fixed backend rule and cannot be changed here. These controls never rewrite historical commissions or course prices.</p>
         <div class="admin-form-grid">
           <label>Referral program enabled
             <select name="referralProgramEnabled">
@@ -1240,37 +1221,10 @@ async function renderSettings() {
               <option value="true" ${settings.referralWithdrawalEnabled === 'true' || settings.referralWithdrawalEnabled === true ? 'selected' : ''}>Yes</option>
             </select>
           </label>
-          <label>Product-level overrides
-            <select name="referralProductOverridesEnabled">
-              <option value="true" ${settings.referralProductOverridesEnabled !== 'false' && settings.referralProductOverridesEnabled !== false ? 'selected' : ''}>Enabled</option>
-              <option value="false" ${settings.referralProductOverridesEnabled === 'false' || settings.referralProductOverridesEnabled === false ? 'selected' : ''}>Disabled</option>
-            </select>
-          </label>
-          <label>Default commission type
-            <select name="referralDefaultCommissionType">
-              <option value="PERCENTAGE" ${settings.referralDefaultCommissionType !== 'FIXED_AMOUNT' ? 'selected' : ''}>Percentage</option>
-              <option value="FIXED_AMOUNT" ${settings.referralDefaultCommissionType === 'FIXED_AMOUNT' ? 'selected' : ''}>Fixed amount</option>
-            </select>
-          </label>
-          <label>Default fixed commission (INR)<input name="referralDefaultFixedRupees" type="text" inputmode="decimal" value="${escapeHtml(paiseToRupeesField(settings.referralDefaultFixedPaise))}"></label>
-          <label>Default percentage<input name="referralDefaultPercent" type="text" inputmode="decimal" value="${escapeHtml(percentFromBps(settings.referralDefaultPercentBps))}"></label>
           <label>Default holding days<input name="referralDefaultHoldingDays" type="number" min="0" value="${escapeHtml(settings.referralDefaultHoldingDays ?? 7)}"></label>
           <label>Attribution days<input name="referralAttributionDays" type="number" min="1" value="${escapeHtml(settings.referralAttributionDays ?? 30)}"></label>
           <label>Minimum withdrawal (INR)<input name="referralMinWithdrawalRupees" type="text" inputmode="decimal" value="${escapeHtml(paiseToRupeesField(settings.referralMinWithdrawalPaise))}"></label>
           <label>Maximum withdrawal (INR, 0 = no max)<input name="referralMaxWithdrawalRupees" type="text" inputmode="decimal" value="${escapeHtml(paiseToRupeesField(settings.referralMaxWithdrawalPaise))}"></label>
-          <label>Commission calculation basis
-            <select name="referralCalculationBasis">
-              <option value="ACTUAL_AMOUNT_PAID" ${settings.referralCalculationBasis !== 'PRODUCT_LIST_PRICE' ? 'selected' : ''}>Actual amount paid</option>
-              <option value="PRODUCT_LIST_PRICE" ${settings.referralCalculationBasis === 'PRODUCT_LIST_PRICE' ? 'selected' : ''}>Product list price</option>
-            </select>
-          </label>
-          <label>Partial refund policy
-            <select name="referralPartialRefundPolicy">
-              <option value="FULL_REVERSAL" ${settings.referralPartialRefundPolicy !== 'PROPORTIONAL' && settings.referralPartialRefundPolicy !== 'THRESHOLD' ? 'selected' : ''}>Full reversal</option>
-              <option value="PROPORTIONAL" ${settings.referralPartialRefundPolicy === 'PROPORTIONAL' ? 'selected' : ''}>Proportional</option>
-              <option value="THRESHOLD" ${settings.referralPartialRefundPolicy === 'THRESHOLD' ? 'selected' : ''}>Reverse if below eligibility</option>
-            </select>
-          </label>
           <label>Chargeback policy
             <select name="referralChargebackPolicy">
               <option value="FREEZE_THEN_REVERSE" ${settings.referralChargebackPolicy !== 'REVERSE_ON_LOST' ? 'selected' : ''}>Freeze, reverse if lost</option>
@@ -1319,7 +1273,7 @@ async function renderReferrals() {
         <tbody>
           ${(data.commissions || []).map((row) => `
             <tr>
-              <td>${moneyPaise(row.amountPaise)}<small>${escapeHtml(row.courseId)} · ${escapeHtml(row.commissionType)}</small></td>
+              <td>${moneyPaise(row.amountPaise)}<small>${escapeHtml(row.courseId)} · ${escapeHtml(percentFromBps(row.percentBps))}%</small></td>
               <td>${escapeHtml(row.referrer)}<small>referred ${escapeHtml(row.referred)}</small></td>
               <td>Paid ${moneyPaise(row.amountPaidPaise)}<small>List ${moneyPaise(row.listPricePaise)} · rule v${escapeHtml(row.ruleVersion)}</small></td>
               <td>${escapeHtml(row.status)}${row.fraudHold ? '<small>fraud hold</small>' : ''}${row.reviewRequired ? '<small>review</small>' : ''}</td>
@@ -1353,9 +1307,25 @@ async function renderReferrals() {
 }
 
 async function renderWithdrawals() {
-  const data = await api('/api/admin/referrals');
+  const [data, noticeData] = await Promise.all([
+    api('/api/admin/referrals'),
+    api('/api/admin/referral-notices').catch(() => ({ notices: [] })),
+  ]);
+  const notices = (noticeData.notices || []).filter((row) => row.status === 'OPEN');
   content.innerHTML = `
     <div class="admin-toolbar"><div><p class="dashboard-eyebrow">PAYOUTS</p><h1>Withdrawal <em>requests.</em></h1></div></div>
+    ${notices.length ? `
+      <section class="admin-panel">
+        <p class="mini-eyebrow">NEW WITHDRAWAL REQUEST</p>
+        ${notices.map((row) => `
+          <p>
+            <strong>${escapeHtml(row.userEmail || '')}</strong>
+            <small>${moneyPaise(row.amountPaise)} · ${escapeHtml(row.method || '')} · ${escapeHtml(row.createdAt ? new Date(row.createdAt).toLocaleString('en-IN') : '')}</small>
+            <button class="admin-inline" data-open="${escapeHtml(row.withdrawalId)}" data-notice="${escapeHtml(row.id)}" type="button">Open</button>
+          </p>
+        `).join('')}
+      </section>
+    ` : ''}
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead><tr><th>Student</th><th>Amount</th><th>Method</th><th>Status</th><th></th></tr></thead>
@@ -1367,9 +1337,9 @@ async function renderWithdrawals() {
               <td>${escapeHtml(row.method)}</td>
               <td>${escapeHtml(row.status)}</td>
               <td>
+                <button class="admin-inline" data-open="${escapeHtml(row.id)}" type="button">View payout</button>
                 ${['PENDING', 'UNDER_REVIEW', 'APPROVED', 'PROCESSING'].includes(row.status) ? `
                   <button class="admin-inline" data-wd="${escapeHtml(row.id)}" data-status="APPROVED" type="button">Approve</button>
-                  <button class="admin-inline" data-wd="${escapeHtml(row.id)}" data-status="PAID" type="button">Mark paid</button>
                   <button class="admin-inline" data-wd="${escapeHtml(row.id)}" data-status="REJECTED" type="button">Reject</button>
                 ` : ''}
               </td>
@@ -1378,6 +1348,7 @@ async function renderWithdrawals() {
         </tbody>
       </table>
     </div>
+    <section class="admin-panel" id="withdrawalDetail" hidden></section>
     <div class="admin-table-wrap" style="margin-top:18px">
       <table class="admin-table">
         <thead><tr><th>Fraud flags</th><th>Signal</th><th>When</th></tr></thead>
@@ -1395,6 +1366,45 @@ async function renderWithdrawals() {
       showToast('Withdrawal updated.', `Status is now ${button.dataset.status}.`);
       renderWithdrawals();
     });
+  });
+  content.querySelectorAll('[data-open]').forEach((button) => {
+    button.addEventListener('click', () => openWithdrawalDetail(button.dataset.open, button.dataset.notice || ''));
+  });
+}
+
+async function openWithdrawalDetail(id, noticeId) {
+  const query = new URLSearchParams({ id });
+  if (noticeId) query.set('noticeId', noticeId);
+  const data = await api(`/api/admin/withdrawal?${query}`);
+  const panel = document.getElementById('withdrawalDetail');
+  if (!panel) return;
+  const withdrawal = data.withdrawal || {};
+  const payout = data.payout || {};
+  const payoutCopy = payout.method === 'UPI'
+    ? `<p><strong>${escapeHtml(payout.holderName || withdrawal.userEmail || '')}</strong><small>UPI ${escapeHtml(payout.upiId || '')}</small></p>`
+    : `<p><strong>${escapeHtml(payout.holderName || withdrawal.userEmail || '')}</strong><small>${escapeHtml(payout.bankName || '')} · ${escapeHtml(payout.accountNumber || '')} · ${escapeHtml(payout.ifsc || '')}</small></p>`;
+  panel.hidden = false;
+  panel.innerHTML = `
+    <p class="mini-eyebrow">PAYOUT DETAILS</p>
+    <h2>Send ${moneyPaise(withdrawal.amountPaise)}</h2>
+    ${payoutCopy}
+    <p class="admin-empty">${escapeHtml(withdrawal.userEmail || '')} · ${escapeHtml(withdrawal.status || '')} · ${escapeHtml(withdrawal.createdAt ? new Date(withdrawal.createdAt).toLocaleString('en-IN') : '')}</p>
+    ${['PENDING', 'UNDER_REVIEW', 'APPROVED', 'PROCESSING'].includes(withdrawal.status) ? `
+      <form class="admin-form" id="markPaidForm">
+        <label>UTR / transaction reference<input name="utr" required value="${escapeHtml(withdrawal.providerReference || '')}"></label>
+        <button class="button button-lime button-sm" type="submit">Mark paid</button>
+      </form>
+    ` : `<p>Reference ${escapeHtml(withdrawal.providerReference || '—')}</p>`}
+  `;
+  document.getElementById('markPaidForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    await api('/api/admin/referral-withdrawal', {
+      method: 'POST',
+      body: { id: withdrawal.id, status: 'PAID', utr: form.get('utr') },
+    });
+    showToast('Withdrawal marked paid.', 'The ledger was updated and the student can see Paid status.');
+    renderWithdrawals();
   });
 }
 

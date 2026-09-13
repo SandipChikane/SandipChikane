@@ -7,7 +7,9 @@
     { "source": "/api/admin/:action", "destination": "/api/admin?action=:action" },
     { "source": "/admin", "destination": "/admin/index.html" },
     { "source": "/admin/", "destination": "/admin/index.html" },
-    { "source": "/r/:code", "destination": "/api/r?code=:code" }
+    { "source": "/r/:code", "destination": "/api/r?code=:code" },
+    { "source": "/referrals", "destination": "/referrals.html" },
+    { "source": "/referrals/", "destination": "/referrals.html" }
   ],
   "crons": [
     { "path": "/api/referral-jobs", "schedule": "0 * * * *" }

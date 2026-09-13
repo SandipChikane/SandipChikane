@@ -10,6 +10,8 @@ create table if not exists public.referral_profiles (
   status text not null default 'active',
   terms_version text,
   terms_accepted_at timestamptz,
+  withdrawal_threshold_paise integer,
+  withdrawal_threshold_set_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint referral_profiles_code_check check (code ~ '^[A-Z2-9]{8,16}$'),
@@ -72,6 +74,7 @@ create table if not exists public.referral_commissions (
   percent_bps integer not null default 0,
   calculation_basis text not null,
   commission_paise integer not null,
+  reversed_paise integer not null default 0,
   holding_days integer not null default 0,
   rule_version integer not null default 1,
   terms_version text,
@@ -133,6 +136,7 @@ create table if not exists public.referral_withdrawals (
   status text not null default 'PENDING',
   idempotency_key text unique,
   admin_note text,
+  provider_reference text,
   paid_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -227,6 +231,25 @@ grant all on public.referral_fraud_flags to service_role;
 grant all on public.referral_activity to service_role;
 grant all on public.payment_provider_events to service_role;
 
+create table if not exists public.referral_admin_notices (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null default 'WITHDRAWAL_REQUEST',
+  withdrawal_id uuid,
+  user_email text not null,
+  amount_paise integer not null default 0,
+  method text,
+  status text not null default 'OPEN',
+  created_at timestamptz not null default now(),
+  read_at timestamptz,
+  constraint referral_admin_notices_kind_check check (kind in ('WITHDRAWAL_REQUEST')),
+  constraint referral_admin_notices_status_check check (status in ('OPEN', 'READ')),
+  constraint referral_admin_notices_amount_check check (amount_paise >= 0)
+);
+
+alter table public.referral_admin_notices enable row level security;
+revoke all on public.referral_admin_notices from anon, authenticated;
+grant all on public.referral_admin_notices to service_role;
+
 create or replace function public.referral_lock_profile(p_email text)
 returns void
 language plpgsql
@@ -245,7 +268,7 @@ as $$
   select greatest(
     0,
     coalesce((
-      select sum(commission_paise) from public.referral_commissions
+      select sum(greatest(0, commission_paise - coalesce(reversed_paise, 0))) from public.referral_commissions
       where referrer_email = p_email and status = 'AVAILABLE' and fraud_hold = false
     ), 0)
     -
@@ -270,6 +293,7 @@ declare
   existing public.referral_withdrawals;
   reserved public.referral_withdrawals;
   available integer;
+  threshold integer;
 begin
   if p_amount is null or p_amount <= 0 then
     raise exception 'invalid_amount' using errcode = '22023';
@@ -283,7 +307,13 @@ begin
   end if;
 
   perform 1 from public.referral_profiles where email = p_email for update;
+  select coalesce(withdrawal_threshold_paise, 0) into threshold
+    from public.referral_profiles
+    where email = p_email;
   available := public.referral_available_paise(p_email);
+  if threshold is null or threshold <= 0 or available < threshold then
+    raise exception 'below_threshold' using errcode = 'P0001';
+  end if;
   if available < p_amount then
     raise exception 'insufficient_available' using errcode = 'P0001';
   end if;

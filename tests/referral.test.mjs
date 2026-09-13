@@ -35,7 +35,7 @@ function enabledStore(extra = {}) {
       calculationBasis: 'ACTUAL_AMOUNT_PAID',
     },
     profiles: extra.profiles || [
-      { email: 'a@college.edu', code: 'ALICE7K92', status: 'active' },
+      { email: 'a@college.edu', code: 'ALICE7K92', status: 'active', withdrawalThresholdPaise: 10000 },
     ],
     attributions: extra.attributions || [],
     products: extra.products || {
@@ -193,7 +193,8 @@ describe('referral commissions after payment', () => {
     const commissions = await store.listCommissions();
     assert.equal(commissions.length, 1);
     assert.equal(commissions[0].referrerEmail, 'a@college.edu');
-    assert.equal(commissions[0].commissionPaise, 50000);
+    assert.equal(commissions[0].commissionPaise, 298000);
+    assert.equal(commissions[0].percentBps, 2000);
     assert.equal(commissions[0].amountPaidPaise, 1490000);
   });
 
@@ -262,18 +263,21 @@ describe('referral commissions after payment', () => {
     await store.saveGlobalSettings({
       ...(await store.getGlobalSettings()),
       defaultFixedPaise: 70000,
+      defaultPercentBps: 5000,
       ruleVersion: 2,
     });
     await referral.awardForPaidOrder({
       req: {},
       buyerEmail: 'b@college.edu',
       course: COURSE,
-      order: { id: 'order_new', amount: 1490000, currency: 'INR' },
+      order: { id: 'order_new', amount: 199900, currency: 'INR' },
       paymentId: 'pay_new',
     });
     const [first, second] = await store.listCommissions();
-    assert.equal(first.commissionPaise, 50000);
-    assert.equal(second.commissionPaise, 70000);
+    assert.equal(first.commissionPaise, 298000);
+    assert.equal(first.percentBps, 2000);
+    assert.equal(second.commissionPaise, 39980);
+    assert.equal(second.percentBps, 2000);
     assert.equal(first.ruleVersion, 1);
   });
 
@@ -453,6 +457,124 @@ describe('withdrawals', () => {
     assert.equal(second.replayed, true);
     assert.equal((await store.listWithdrawals('a@college.edu')).length, 1);
   });
+
+  it('blocks withdrawal when available earnings are below the stored purchase threshold', async () => {
+    const store = enabledStore({
+      profiles: [{ email: 'a@college.edu', code: 'ALICE7K92', status: 'active', withdrawalThresholdPaise: 1490000 }],
+    });
+    await store.insertCommission({
+      referrerEmail: 'a@college.edu',
+      referredEmail: 'b@college.edu',
+      courseId: COURSE.id,
+      providerOrderId: 'order_low',
+      commissionPaise: 298000,
+      amountPaidPaise: 1490000,
+      status: 'AVAILABLE',
+      currency: 'INR',
+    });
+    await store.savePayoutAccount({ email: 'a@college.edu', method: 'UPI', encryptedPayload: 'x', fingerprint: 'f1' });
+    const withdrawals = createWithdrawalServices({ store, env: ENV });
+    const settings = await store.getGlobalSettings();
+    await assert.rejects(
+      () => withdrawals.requestWithdrawal({
+        email: 'a@college.edu',
+        amountPaise: 20000,
+        method: 'UPI',
+        settings,
+      }),
+      (error) => error.status === 403,
+    );
+  });
+
+  it('allows withdrawal when available earnings reach the stored purchase threshold', async () => {
+    const store = enabledStore({
+      profiles: [{ email: 'a@college.edu', code: 'ALICE7K92', status: 'active', withdrawalThresholdPaise: 249900 }],
+    });
+    await store.insertCommission({
+      referrerEmail: 'a@college.edu',
+      referredEmail: 'b@college.edu',
+      courseId: COURSE.id,
+      providerOrderId: 'order_ok_wd',
+      commissionPaise: 249900,
+      amountPaidPaise: 1249500,
+      status: 'AVAILABLE',
+      currency: 'INR',
+    });
+    await store.savePayoutAccount({ email: 'a@college.edu', method: 'UPI', encryptedPayload: 'x', fingerprint: 'f1' });
+    const withdrawals = createWithdrawalServices({ store, env: ENV });
+    const result = await withdrawals.requestWithdrawal({
+      email: 'a@college.edu',
+      amountPaise: 20000,
+      method: 'UPI',
+      settings: await store.getGlobalSettings(),
+    });
+    assert.equal(result.withdrawal.status, 'PENDING');
+    assert.equal((await store.listAdminNotices()).length, 1);
+    assert.equal((await store.listAdminNotices())[0].kind, 'WITHDRAWAL_REQUEST');
+  });
+
+  it('does not count pending commission toward withdrawal eligibility', async () => {
+    const store = enabledStore({
+      profiles: [{ email: 'a@college.edu', code: 'ALICE7K92', status: 'active', withdrawalThresholdPaise: 10000 }],
+    });
+    await store.insertCommission({
+      referrerEmail: 'a@college.edu',
+      referredEmail: 'b@college.edu',
+      courseId: COURSE.id,
+      providerOrderId: 'order_pend',
+      commissionPaise: 298000,
+      amountPaidPaise: 1490000,
+      status: 'PENDING',
+      currency: 'INR',
+    });
+    await store.savePayoutAccount({ email: 'a@college.edu', method: 'UPI', encryptedPayload: 'x', fingerprint: 'f1' });
+    const withdrawals = createWithdrawalServices({ store, env: ENV });
+    const settings = await store.getGlobalSettings();
+    await assert.rejects(
+      () => withdrawals.requestWithdrawal({
+        email: 'a@college.edu',
+        amountPaise: 20000,
+        method: 'UPI',
+        settings,
+      }),
+      (error) => error.status === 403 || error.status === 409,
+    );
+  });
+});
+
+describe('qualifying purchase snapshot and refunds', () => {
+  it('stores the first paid amount as the withdrawal threshold and does not overwrite it', async () => {
+    const store = enabledStore();
+    const referral = createReferralServices({ store, env: ENV });
+    await referral.recordQualifyingPurchase('buyer@college.edu', 199900);
+    const first = await store.getProfile('buyer@college.edu');
+    assert.equal(first.withdrawalThresholdPaise, 199900);
+    await referral.recordQualifyingPurchase('buyer@college.edu', 300000);
+    const second = await store.getProfile('buyer@college.edu');
+    assert.equal(second.withdrawalThresholdPaise, 199900);
+  });
+
+  it('creates a proportional reversal ledger entry without deleting the original commission', async () => {
+    const store = enabledStore({
+      attributions: [{ referredEmail: 'b@college.edu', referrerEmail: 'a@college.edu', code: 'ALICE7K92' }],
+    });
+    const referral = createReferralServices({ store, env: ENV });
+    await referral.awardForPaidOrder({
+      req: {},
+      buyerEmail: 'b@college.edu',
+      course: COURSE,
+      order: { id: 'order_part', amount: 199900, currency: 'INR' },
+      paymentId: 'pay_part',
+    });
+    const refunded = await referral.applyRefund({ providerOrderId: 'order_part', refundedPaise: 99950, full: false });
+    const commission = await store.getCommissionByOrder('order_part');
+    assert.equal(refunded.partial, true);
+    assert.equal(commission.status, 'PENDING');
+    assert.equal(commission.commissionPaise, 39980);
+    assert.equal(commission.reversedPaise, 19990);
+    assert.ok((await store.listLedger('a@college.edu')).some((row) => row.type === 'REFUND_REVERSAL'));
+    assert.ok((await store.listLedger('a@college.edu')).some((row) => row.type === 'REFERRAL_COMMISSION'));
+  });
 });
 
 describe('referral authorization', () => {
@@ -494,5 +616,33 @@ describe('ui regression', () => {
     assert.equal(home.includes('data-course-id="data-analytics"'), false);
     const course = readFileSync(path.join(ROOT, 'course.html'), 'utf8');
     assert.equal(course.includes('Referral Link'), false);
+  });
+
+  it('keeps referral details off the main dashboard and on /referrals', () => {
+    const dashboard = readFileSync(path.join(ROOT, 'dashboard.html'), 'utf8');
+    const dashJs = readFileSync(path.join(ROOT, 'dashboard.js'), 'utf8');
+    const referrals = readFileSync(path.join(ROOT, 'referrals.html'), 'utf8');
+    assert.equal(dashboard.includes('id="referralCard"'), false);
+    assert.equal(dashboard.includes('Pending Earnings'), false);
+    assert.equal(dashboard.includes('Refer & Earn'), false);
+    assert.equal(dashboard.includes('> Referrals<'), true);
+    assert.equal(dashJs.includes('renderReferralCard'), false);
+    assert.equal(referrals.includes('id="referralRoot"'), true);
+    assert.equal(referrals.includes('noindex'), true);
+    const admin = readFileSync(path.join(ROOT, 'admin/admin.js'), 'utf8');
+    assert.equal(admin.includes('referralDefaultCommissionType'), false);
+    assert.equal(admin.includes('referralDefaultPercent'), false);
+    assert.equal(admin.includes('Product-level overrides'), false);
+  });
+
+  it('exposes the fixed backend rate and withdrawal eligibility on the student API', async () => {
+    const store = enabledStore();
+    const api = createHandlers({ env: ENV, store, fetch: async () => new Response('[]') });
+    const result = await api.referralMe(studentReq('a@college.edu'));
+    assert.equal(result.status, 200);
+    assert.equal(result.body.commissionRateLabel, '20%');
+    assert.equal(result.body.commissionPercentBps, 2000);
+    assert.equal(result.body.eligibility.thresholdPaise, 10000);
+    assert.ok(String(result.body.disclosure).includes('20%'));
   });
 });
