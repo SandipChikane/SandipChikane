@@ -306,6 +306,27 @@ describe('handlers with credentials', () => {
     assert.equal(result.status, 401);
   });
 
+  it('clears student and TPO cookies on sign-out', async () => {
+    const api = createHandlers({ env });
+    const student = await api.studentLogout();
+    assert.equal(student.status, 200);
+    assert.match(student.headers['Set-Cookie'], /gf_student=;.*Max-Age=0/);
+    const tpo = await api.tpoLogout();
+    assert.equal(tpo.status, 200);
+    assert.match(tpo.headers['Set-Cookie'], /gf_tpo=;.*Max-Age=0/);
+  });
+
+  it('sends every sign-out action to the landing page', () => {
+    const student = readFileSync(path.join(ROOT, 'dashboard.js'), 'utf8');
+    const admin = readFileSync(path.join(ROOT, 'admin/admin.js'), 'utf8');
+    const tpo = readFileSync(path.join(ROOT, 'tpo.js'), 'utf8');
+    const enrollment = readFileSync(path.join(ROOT, 'enrollment.js'), 'utf8');
+    assert.match(enrollment, /window\.location\.assign\('\/'\)/);
+    assert.match(student, /goToLanding\(\)/);
+    assert.match(admin, /window\.location\.assign\('\/'\)/);
+    assert.match(tpo, /goToLanding\(\)/);
+  });
+
   it('does not unlock an existing purchase without the student password', async () => {
     const api = createHandlers({
       env,

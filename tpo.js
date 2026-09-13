@@ -332,5 +332,17 @@ if (collegeStudents.length === 0) {
   document.getElementById('kpiEnrolledHint').textContent = `No Gradflow enrollments from ${college} yet`;
 }
 
+document.getElementById('tpoLogout')?.addEventListener('click', async () => {
+  try {
+    if (window.GradflowEnrollment?.tpoLogout) {
+      await window.GradflowEnrollment.tpoLogout();
+    }
+  } finally {
+    localStorage.removeItem('gradflowTpoCollege');
+    localStorage.removeItem('gradflowTpoName');
+    window.GradflowEnrollment.goToLanding();
+  }
+});
+
 render();
 mergeRemoteEnrollments();

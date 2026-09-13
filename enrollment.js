@@ -172,6 +172,10 @@ async function studentSession() {
   return apiRequest('/api/student-session');
 }
 
+function goToLanding() {
+  window.location.assign('/');
+}
+
 async function studentLogout() {
   const result = await apiRequest('/api/student-logout', { method: 'POST' });
   clearLocalAccess();
@@ -200,6 +204,10 @@ async function tpoSession({ name, email, college, accessCode }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, email, college, accessCode }),
   });
+}
+
+async function tpoLogout() {
+  return apiRequest('/api/tpo-logout', { method: 'POST' });
 }
 
 async function tpoEnrollments(college) {
@@ -247,10 +255,12 @@ window.GradflowEnrollment = {
   setStudentPassword,
   studentSession,
   studentLogout,
+  goToLanding,
   clearLocalAccess,
   createOrder,
   verifyPayment,
   tpoSession,
+  tpoLogout,
   tpoEnrollments,
   loadRazorpay,
   formatPrice,

@@ -116,9 +116,11 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
 });
 
 document.getElementById('logoutButton').addEventListener('click', async () => {
-  await api('/api/admin/logout', { method: 'POST', body: {} });
-  state.session = null;
-  showLogin();
+  try {
+    await api('/api/admin/logout', { method: 'POST', body: {} });
+  } finally {
+    window.location.assign('/');
+  }
 });
 
 document.getElementById('dashMenu')?.addEventListener('click', () => {

@@ -199,13 +199,11 @@ document.getElementById('dashSetPasswordForm')?.addEventListener('submit', async
 });
 
 document.getElementById('studentLogout')?.addEventListener('click', async () => {
-  await window.GradflowEnrollment.studentLogout();
-  applyStudentIdentity('');
-  const chip = document.getElementById('studentChipName');
-  if (chip) chip.textContent = 'Student';
-  if (studentName) studentName.textContent = 'there.';
-  showToast('Signed out.', 'Sign in again to reopen paid courses.');
-  await syncCourseAccess();
+  try {
+    await window.GradflowEnrollment.studentLogout();
+  } finally {
+    window.GradflowEnrollment.goToLanding();
+  }
 });
 
 async function syncCourseAccess() {
