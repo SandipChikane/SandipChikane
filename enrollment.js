@@ -233,17 +233,29 @@ function formatPrice(amount) {
   return `₹${Number(amount).toLocaleString('en-IN')}`;
 }
 
-function courseUrl(courseId) {
-  return `course.html?course=${encodeURIComponent(courseId)}`;
+function courseUrl(courseId, extra = {}) {
+  const params = new URLSearchParams({ course: courseId });
+  if (extra.section) params.set('section', extra.section);
+  if (extra.lesson) params.set('lesson', extra.lesson);
+  return `course.html?${params}`;
 }
 
-async function loadStudentCourse(id, { preview = false } = {}) {
+async function loadStudentCourse(id, { preview = false, section = '' } = {}) {
   if (!id) return null;
   const query = new URLSearchParams({ id });
   if (preview) query.set('preview', '1');
+  if (section) query.set('section', section);
   const result = await apiRequest(`/api/catalog-course?${query}`);
   if (!result.ok || !result.data.course) return null;
-  return { ...result.data.course, preview: Boolean(result.data.preview) };
+  return result.data;
+}
+
+async function markLessonComplete(courseId, lessonId) {
+  return apiRequest('/api/lesson-progress', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ courseId, lessonId, status: 'completed' }),
+  });
 }
 
 window.GradflowEnrollment = {
@@ -275,4 +287,5 @@ window.GradflowEnrollment = {
   formatPrice,
   courseUrl,
   loadStudentCourse,
+  markLessonComplete,
 };

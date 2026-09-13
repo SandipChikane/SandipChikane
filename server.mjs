@@ -38,6 +38,7 @@ const routes = {
   'POST /api/student-password': ({ req, body }) => handlers.studentPassword(req, body),
   'GET /api/student-session': ({ req }) => handlers.studentSession(req),
   'POST /api/student-logout': () => handlers.studentLogout(),
+  'POST /api/lesson-progress': ({ req, body }) => handlers.lessonProgress(req, body),
   'POST /api/tpo-session': ({ body }) => handlers.tpoSession(body),
   'POST /api/tpo-logout': () => handlers.tpoLogout(),
   'GET /api/tpo-enrollments': ({ req, query }) => handlers.tpoEnrollments(query, req),
