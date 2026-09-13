@@ -258,6 +258,30 @@ async function markLessonComplete(courseId, lessonId) {
   });
 }
 
+async function referralDashboard() {
+  return apiRequest(`/api/referral?origin=${encodeURIComponent(window.location.origin)}`);
+}
+
+async function acceptReferralTerms() {
+  return apiRequest('/api/referral-terms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+}
+
+async function savePayoutAccount(payload) {
+  return apiRequest('/api/payout-account', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function requestWithdrawal(payload) {
+  return apiRequest('/api/withdrawals', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': payload.idempotencyKey || '' },
+    body: JSON.stringify(payload),
+  });
+}
+
 window.GradflowEnrollment = {
   catalog: COURSE_CATALOG,
   getStudentEmail,
@@ -288,4 +312,8 @@ window.GradflowEnrollment = {
   courseUrl,
   loadStudentCourse,
   markLessonComplete,
+  referralDashboard,
+  acceptReferralTerms,
+  savePayoutAccount,
+  requestWithdrawal,
 };

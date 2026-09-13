@@ -6,6 +6,10 @@
   "rewrites": [
     { "source": "/api/admin/:action", "destination": "/api/admin?action=:action" },
     { "source": "/admin", "destination": "/admin/index.html" },
-    { "source": "/admin/", "destination": "/admin/index.html" }
+    { "source": "/admin/", "destination": "/admin/index.html" },
+    { "source": "/r/:code", "destination": "/api/r?code=:code" }
+  ],
+  "crons": [
+    { "path": "/api/referral-jobs", "schedule": "0 * * * *" }
   ]
 }

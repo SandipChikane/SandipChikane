@@ -31,10 +31,17 @@ const TYPES = {
 
 const routes = {
   'GET /api/public-config': () => handlers.publicConfig(),
-  'POST /api/create-order': ({ body }) => handlers.createOrder(body),
-  'POST /api/verify-payment': ({ body }) => handlers.verifyPayment(body),
+  'POST /api/create-order': ({ req, body }) => handlers.createOrder(body, req),
+  'POST /api/verify-payment': ({ req, body }) => handlers.verifyPayment(body, req),
   'GET /api/enrollments': ({ req }) => handlers.enrollments(req),
-  'POST /api/student-login': ({ body }) => handlers.studentLogin(body),
+  'POST /api/student-login': ({ req, body }) => handlers.studentLogin(body, req),
+  'GET /api/referral': ({ req, query }) => handlers.referralMe(req, query),
+  'POST /api/referral-terms': ({ req }) => handlers.referralTerms(req),
+  'GET /api/payout-account': ({ req }) => handlers.referralPayout(req, {}, 'GET'),
+  'POST /api/payout-account': ({ req, body }) => handlers.referralPayout(req, body, 'POST'),
+  'GET /api/withdrawals': ({ req }) => handlers.referralWithdrawals(req),
+  'POST /api/withdrawals': ({ req, body }) => handlers.referralWithdraw(req, body),
+  'POST /api/referral-jobs': ({ req, body }) => handlers.referralMature(req, body),
   'POST /api/student-password': ({ req, body }) => handlers.studentPassword(req, body),
   'GET /api/student-session': ({ req }) => handlers.studentSession(req),
   'POST /api/student-logout': () => handlers.studentLogout(),
@@ -90,6 +97,16 @@ const server = createServer(async (req, res) => {
         body,
         rawBody,
         signature: req.headers['x-razorpay-signature'] || '',
+      });
+      sendResult(res, result);
+      return;
+    }
+
+    if (url.pathname.startsWith('/r/')) {
+      const code = decodeURIComponent(url.pathname.slice(3).split('/')[0] || '');
+      const result = await handlers.visitReferral(req, {
+        code,
+        next: url.searchParams.get('next') || '',
       });
       sendResult(res, result);
       return;
