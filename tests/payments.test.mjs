@@ -12,17 +12,34 @@ import { verifyCheckoutSignature, verifyWebhookSignature } from '../lib/razorpay
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+const TEST_COURSE = {
+  id: 'data-analytics',
+  name: 'Data Analytics in the Wild',
+  price: 14900,
+  status: 'published',
+};
+
+function withCmsCourse(inner, course = TEST_COURSE) {
+  return async (url, options = {}) => {
+    const href = String(url);
+    if (href.includes('/rest/v1/courses?')) {
+      const match = href.includes(`id=eq.${course.id}`);
+      return new Response(JSON.stringify(match ? [course] : []), { status: 200 });
+    }
+    return inner(url, options);
+  };
+}
+
 function signCheckout(orderId, paymentId, secret) {
   return crypto.createHmac('sha256', secret).update(`${orderId}|${paymentId}`).digest('hex');
 }
 
 describe('catalog', () => {
-  it('matches the browser course prices and ids', () => {
+  it('does not ship a built-in public catalog', () => {
+    assert.equal(COURSE_CATALOG.length, 0);
     const source = readFileSync(path.join(ROOT, 'enrollment.js'), 'utf8');
-    for (const course of COURSE_CATALOG) {
-      assert.match(source, new RegExp(`id: '${course.id}'`));
-      assert.match(source, new RegExp(`price: ${course.price}`));
-    }
+    assert.equal(source.includes("id: 'data-analytics'"), false);
+    assert.equal(readFileSync(path.join(ROOT, 'index.html'), 'utf8').includes('data-course-id="data-analytics"'), false);
   });
 });
 
@@ -134,7 +151,7 @@ describe('handlers with credentials', () => {
     const calls = [];
     const api = createHandlers({
       env,
-      fetch: async (url, options = {}) => {
+      fetch: withCmsCourse(async (url, options = {}) => {
         calls.push({ url: String(url), options });
         if (String(url).includes('/rest/v1/enrollments?')) {
           return new Response('[]', { status: 200 });
@@ -147,7 +164,7 @@ describe('handlers with credentials', () => {
           }), { status: 200 });
         }
         return new Response('{}', { status: 404 });
-      },
+      }),
     });
     const result = await api.createOrder({
       email: 'Student@vitstudent.ac.in',
@@ -171,10 +188,10 @@ describe('handlers with credentials', () => {
   it('does not start checkout without a student password', async () => {
     const api = createHandlers({
       env,
-      fetch: async (url) => {
+      fetch: withCmsCourse(async (url) => {
         if (String(url).includes('/rest/v1/enrollments?')) return new Response('[]', { status: 200 });
         return new Response('{}', { status: 404 });
-      },
+      }),
     });
     const result = await api.createOrder({
       email: 'student@vitstudent.ac.in',
@@ -186,7 +203,7 @@ describe('handlers with credentials', () => {
   });
 
   it('rejects a bad payment signature', async () => {
-    const api = createHandlers({ env, fetch: async () => new Response('{}') });
+    const api = createHandlers({ env, fetch: withCmsCourse(async () => new Response('{}')) });
     const result = await api.verifyPayment({
       email: 'student@vitstudent.ac.in',
       courseId: 'data-analytics',
@@ -203,7 +220,7 @@ describe('handlers with credentials', () => {
     const signature = signCheckout('order_123', 'pay_123', env.RAZORPAY_KEY_SECRET);
     const api = createHandlers({
       env,
-      fetch: async (url, options = {}) => {
+      fetch: withCmsCourse(async (url, options = {}) => {
         if (String(url).includes('/v1/orders/order_123')) {
           return new Response(JSON.stringify({
             id: 'order_123',
@@ -233,7 +250,7 @@ describe('handlers with credentials', () => {
           }]), { status: 201 });
         }
         return new Response('{}', { status: 404 });
-      },
+      }),
     });
     const result = await api.verifyPayment({
       email: 'student@vitstudent.ac.in',
@@ -292,7 +309,7 @@ describe('handlers with credentials', () => {
   it('does not unlock an existing purchase without the student password', async () => {
     const api = createHandlers({
       env,
-      fetch: async (url) => {
+      fetch: withCmsCourse(async (url) => {
         if (String(url).includes('/rest/v1/enrollments?')) {
           return new Response(JSON.stringify([{
             student_email: 'student@vitstudent.ac.in',
@@ -305,7 +322,7 @@ describe('handlers with credentials', () => {
           }]), { status: 200 });
         }
         return new Response('[]', { status: 200 });
-      },
+      }),
     });
     const result = await api.createOrder({
       email: 'student@vitstudent.ac.in',
@@ -322,7 +339,7 @@ describe('handlers with credentials', () => {
     const passwordHash = hashPassword('campus-pass-1');
     const api = createHandlers({
       env,
-      fetch: async (url) => {
+      fetch: withCmsCourse(async (url) => {
         const href = String(url);
         if (href.includes('/rest/v1/student_accounts')) {
           return new Response(JSON.stringify([{
@@ -342,7 +359,7 @@ describe('handlers with credentials', () => {
           }]), { status: 200 });
         }
         return new Response('[]', { status: 200 });
-      },
+      }),
     });
     const result = await api.createOrder({
       email: 'student@vitstudent.ac.in',

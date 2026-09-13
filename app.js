@@ -162,6 +162,78 @@ function syncAccessPills() {
   });
 }
 
+function courseVisualClass(category) {
+  if (category === 'tech') return 'visual-dev';
+  if (category === 'design') return 'visual-design';
+  return 'visual-analytics';
+}
+
+function renderLandingCourses() {
+  const grid = document.getElementById('courseGrid') || document.querySelector('.course-grid');
+  if (!grid) return;
+  const courses = (window.GradflowEnrollment.catalog || []).filter((course) => course.status !== 'archived');
+  const count = document.getElementById('courseCount');
+  if (count) count.textContent = String(courses.length).padStart(2, '0');
+  const seeAll = document.querySelector('.see-all');
+  if (seeAll) seeAll.hidden = courses.length === 0;
+
+  grid.replaceChildren();
+  if (!courses.length) {
+    const empty = document.createElement('p');
+    empty.className = 'course-empty';
+    empty.id = 'courseEmpty';
+    empty.textContent = 'Published courses will appear here. Add one in the admin portal, then set it to Published.';
+    grid.appendChild(empty);
+    return;
+  }
+
+  const featuredId = courses.find((course) => course.featured)?.id || courses[0].id;
+  courses.forEach((course) => {
+    const featured = course.id === featuredId;
+    const category = course.category || 'analytics';
+    const image = course.coverImageUrl || course.thumbnailUrl;
+    const tools = (course.tools || []).map((tool) => `<span>${escapeHtml(tool)}</span>`).join('');
+    const card = document.createElement('article');
+    card.className = featured ? 'course-card featured' : 'course-card compact-card';
+    card.dataset.category = category;
+    if (featured) {
+      card.innerHTML = `
+        <div class="course-visual ${courseVisualClass(category)}">
+          ${course.featured ? '<span class="course-tag">FEATURED</span>' : ''}
+          ${image ? `<img src="${escapeHtml(image)}" alt="">` : '<span class="visual-symbol">▥</span>'}
+        </div>
+        <div class="course-body">
+          <div class="course-meta"><span>${escapeHtml(category.toUpperCase())}</span><span>${escapeHtml(course.weeks || 0)} WEEKS</span></div>
+          <h3>${escapeHtml(course.name)}</h3>
+          <p>${escapeHtml(course.blurb || '')}</p>
+          <div class="access-row" data-access-for="${escapeHtml(course.id)}">
+            <span class="course-price">${window.GradflowEnrollment.formatPrice(course.price)}</span>
+            <span class="access-pill locked">Locked</span>
+          </div>
+          <div class="course-footer">
+            <div class="tool-badges">${tools}</div>
+            <button class="round-arrow" data-course-id="${escapeHtml(course.id)}" data-course="${escapeHtml(course.name)}" aria-label="Open ${escapeHtml(course.name)}">↗</button>
+          </div>
+        </div>`;
+    } else {
+      card.innerHTML = `
+        <div class="compact-icon">＋</div>
+        <div>
+          <div class="course-meta"><span>${escapeHtml(category.toUpperCase())}</span><span>${escapeHtml(course.weeks || 0)} WEEKS</span></div>
+          <h3>${escapeHtml(course.name)}</h3>
+          <p>${escapeHtml(course.blurb || '')}</p>
+          <div class="access-row" data-access-for="${escapeHtml(course.id)}">
+            <span class="course-price">${window.GradflowEnrollment.formatPrice(course.price)}</span>
+            <span class="access-pill locked">Locked</span>
+          </div>
+        </div>
+        <button class="round-arrow" data-course-id="${escapeHtml(course.id)}" data-course="${escapeHtml(course.name)}" aria-label="Open ${escapeHtml(course.name)}">↗</button>`;
+    }
+    grid.appendChild(card);
+  });
+  syncAccessPills();
+}
+
 syncAccessPills();
 
 window.GradflowEnrollment.publicConfig?.().then((config) => {
@@ -170,28 +242,5 @@ window.GradflowEnrollment.publicConfig?.().then((config) => {
 });
 
 window.GradflowEnrollment.loadPublishedCatalog?.().then(() => {
-  syncAccessPills();
-  const grid = document.querySelector('.course-grid');
-  if (!grid) return;
-  const existing = new Set([...document.querySelectorAll('[data-course-id]')].map((node) => node.dataset.courseId));
-  window.GradflowEnrollment.catalog.forEach((course) => {
-    if (existing.has(course.id) || course.status === 'archived') return;
-    const card = document.createElement('article');
-    card.className = 'course-card compact-card';
-    card.dataset.category = course.category || 'analytics';
-    card.innerHTML = `
-      <div class="compact-icon">＋</div>
-      <div>
-        <div class="course-meta"><span>${escapeHtml((course.category || 'course').toUpperCase())}</span><span>${escapeHtml(course.weeks || 0)} WEEKS</span></div>
-        <h3>${escapeHtml(course.name)}</h3>
-        <p>${escapeHtml(course.blurb || '')}</p>
-        <div class="access-row" data-access-for="${escapeHtml(course.id)}">
-          <span class="course-price">${window.GradflowEnrollment.formatPrice(course.price)}</span>
-          <span class="access-pill locked">Locked</span>
-        </div>
-      </div>
-      <button class="round-arrow" data-course-id="${escapeHtml(course.id)}" data-course="${escapeHtml(course.name)}" aria-label="Open ${escapeHtml(course.name)}">↗</button>`;
-    grid.appendChild(card);
-  });
-  syncAccessPills();
+  renderLandingCourses();
 });

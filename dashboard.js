@@ -3,7 +3,11 @@ const modalContent = document.getElementById('dashboardModalContent');
 const modalClose = document.getElementById('dashboardModalClose');
 const toast = document.getElementById('dashToast');
 const studentName = document.getElementById('studentFirstName');
-const ANALYTICS_COURSE = 'data-analytics';
+function primaryCourse() {
+  return window.GradflowEnrollment.catalog.find((course) => window.GradflowEnrollment.isEnrolled(course.id))
+    || window.GradflowEnrollment.catalog[0]
+    || null;
+}
 
 function applyStudentIdentity(email) {
   const savedEmail = (email || window.GradflowEnrollment.getStudentEmail() || '').trim();
@@ -21,16 +25,22 @@ function applyStudentIdentity(email) {
 applyStudentIdentity();
 
 function analyticsUnlocked() {
-  return window.GradflowEnrollment.isEnrolled(ANALYTICS_COURSE);
+  const course = primaryCourse();
+  return Boolean(course && window.GradflowEnrollment.isEnrolled(course.id));
 }
 
 function goToCourse(courseId) {
+  if (!courseId) {
+    window.location.href = 'index.html#courses';
+    return;
+  }
   window.location.href = window.GradflowEnrollment.courseUrl(courseId);
 }
 
 function requireAnalytics(openUnlocked) {
-  if (!analyticsUnlocked()) {
-    goToCourse(ANALYTICS_COURSE);
+  const course = primaryCourse();
+  if (!course || !window.GradflowEnrollment.isEnrolled(course.id)) {
+    goToCourse(course?.id);
     return;
   }
   openUnlocked();
@@ -206,21 +216,32 @@ async function syncCourseAccess() {
     hasAccount: Boolean(refresh.hasAccount),
     email: refresh.email || window.GradflowEnrollment.getStudentEmail(),
   });
-  const unlocked = analyticsUnlocked();
+  const course = primaryCourse();
+  const unlocked = Boolean(course && window.GradflowEnrollment.isEnrolled(course.id));
   const banner = document.getElementById('learning');
   const lesson = document.getElementById('lessonCard');
   const continueButton = document.getElementById('continueButton');
+  const title = document.getElementById('learningTitle');
+  if (title) title.textContent = course?.name || 'Your learning';
   banner.classList.toggle('is-locked', !unlocked);
   lesson.classList.toggle('is-locked', !unlocked);
   document.getElementById('learningBadge').textContent = unlocked ? 'KEEP YOUR MOMENTUM' : 'COURSE LOCKED';
   document.getElementById('learningCopy').textContent = unlocked
-    ? 'Module 6 of 8 · Turning numbers into a compelling story'
-    : `Pay ${window.GradflowEnrollment.formatPrice(window.GradflowEnrollment.courseById(ANALYTICS_COURSE).price)} and enroll to open lessons.`;
-  continueButton.innerHTML = unlocked ? 'Continue learning <span>→</span>' : 'Pay and enroll to unlock <span>→</span>';
+    ? (course.blurb || 'Your paid course is ready.')
+    : course
+      ? `Pay ${window.GradflowEnrollment.formatPrice(course.price)} and enroll to open lessons.`
+      : 'Publish a course in admin to list it here.';
+  continueButton.innerHTML = unlocked ? 'Continue learning <span>→</span>' : course ? 'Pay and enroll to unlock <span>→</span>' : 'Browse courses <span>→</span>';
   document.getElementById('resumeLesson').innerHTML = unlocked ? 'Resume sprint <span>→</span>' : 'Unlock this lesson <span>→</span>';
 
   const list = document.getElementById('courseAccessList');
   list.replaceChildren();
+  if (!window.GradflowEnrollment.catalog.length) {
+    const empty = document.createElement('p');
+    empty.className = 'dash-locked-note';
+    empty.textContent = 'No published courses yet. Add one in the admin portal.';
+    list.appendChild(empty);
+  }
   window.GradflowEnrollment.catalog.forEach((course) => {
     const enrolled = window.GradflowEnrollment.isEnrolled(course.id);
     const link = document.createElement('a');

@@ -1,3 +1,26 @@
+.course-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 42px 24px;
+  text-align: center;
+  color: #5c6d67;
+  background: #fffdfa;
+  border: 1px dashed var(--line, rgba(10, 36, 32, 0.15));
+}
+
+.course-visual {
+  position: relative;
+  overflow: hidden;
+}
+
+.course-visual img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .course-page {
   background: var(--canvas);
   min-height: 100vh;

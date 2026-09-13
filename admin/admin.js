@@ -180,20 +180,10 @@ async function renderOverview() {
         <p class="mini-eyebrow">ACTIVITY</p>
         ${data.recentAudit.length ? data.recentAudit.map((row) => `<p><strong>${escapeHtml(row.action)}</strong><small>${escapeHtml(row.entity || '')} ${escapeHtml(row.entity_id || '')}</small></p>`).join('') : '<p class="admin-empty">No admin activity yet.</p>'}
         <div class="admin-actions">
-          <button type="button" id="seedCatalog">Seed built-in courses</button>
           <a href="#courses">Open course list</a>
         </div>
       </section>
     </div>`;
-  document.getElementById('seedCatalog')?.addEventListener('click', async () => {
-    try {
-      const result = await api('/api/admin/seed', { method: 'POST', body: {} });
-      showToast(result.seeded ? 'Missing courses seeded.' : 'Built-in catalog already present.', `${result.added || 0} added · ${result.count} total.`);
-      await renderOverview();
-    } catch (error) {
-      showToast('Seed failed.', error.message);
-    }
-  });
 }
 
 async function renderCourses() {
