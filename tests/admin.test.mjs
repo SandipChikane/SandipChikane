@@ -92,18 +92,23 @@ describe('cms mapping', () => {
     const studentCourse = toStudentCourse(row, modules, lessons);
     const adminCourse = toAdminCourse(row, modules, lessons);
     assert.equal(publicCourse.lesson.videoUrl, '');
-    assert.equal(publicCourse.lessons[0].resourceUrl, '');
+    assert.equal(publicCourse.lessons.length, 0);
     assert.equal(publicCourse.modules[0].title, 'Start');
+    assert.equal(publicCourse.sections[0].title, 'Demo Lab');
+    assert.equal(publicCourse.sections[0].lessonCount, 1);
     assert.equal(studentCourse.lesson.videoUrl, '/api/lesson-media?course=demo-lab&kind=video&lesson=l1');
     assert.match(studentCourse.lesson.resourceUrl, /kind=resource/);
     assert.equal(JSON.stringify(studentCourse).includes('example.com/lesson.mp4'), false);
     assert.equal(adminCourse.lesson.videoUrl, 'https://example.com/lesson.mp4');
+    assert.equal(studentCourse.sections[0].modules[0].lessons[0].videoUrl.includes('lesson-media'), true);
   });
 
   it('seeds every built-in course as published', () => {
     const payloads = seedPayloadFromCatalog(SEED_COURSES);
     assert.equal(payloads.length, 5);
     assert.ok(payloads.every((course) => course.status === 'published'));
+    assert.ok(payloads.every((course) => course.sections?.length === 1));
+    assert.equal(JSON.stringify(payloads).includes('Learn Excel'), false);
   });
 
   it('unwraps jsonb settings to strings', () => {

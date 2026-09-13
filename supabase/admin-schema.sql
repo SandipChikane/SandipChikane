@@ -108,3 +108,5 @@ grant all on public.course_lessons to service_role;
 grant all on public.media_assets to service_role;
 grant all on public.site_settings to service_role;
 grant all on public.admin_audit to service_role;
+
+-- Learning sections, lesson content, and progress live in learning-sections.sql.

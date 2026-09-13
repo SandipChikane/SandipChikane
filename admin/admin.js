@@ -281,6 +281,36 @@ async function renderCourses() {
   }));
 }
 
+function blankLesson() {
+  return { title: '', type: 'LESSON', minutes: 20, copy: '', isCurrent: false };
+}
+
+function blankModule(index = 0) {
+  return {
+    number: String(index + 1).padStart(2, '0'),
+    title: '',
+    time: '',
+    description: '',
+    lessons: [blankLesson()],
+  };
+}
+
+function blankSection(index = 0) {
+  return {
+    title: '',
+    slug: '',
+    shortDescription: '',
+    fullDescription: '',
+    thumbnailUrl: '',
+    icon: '',
+    status: 'draft',
+    estimatedMinutes: 0,
+    prerequisiteIds: [],
+    modules: [blankModule(0)],
+    sortOrder: index,
+  };
+}
+
 function blankCourse() {
   return {
     id: '',
@@ -299,10 +329,64 @@ function blankCourse() {
     sortOrder: 0,
     seoTitle: '',
     seoDescription: '',
-    modules: [{ number: '01', title: '', time: '', description: '' }],
-    lessons: [{ title: '', type: 'LESSON', minutes: 30, copy: '', isCurrent: true, moduleIndex: 0 }],
+    sections: [blankSection(0)],
+    modules: [],
+    lessons: [],
     lesson: {},
   };
+}
+
+function ensureHierarchy(course) {
+  if (!course) return blankCourse();
+  if (!Array.isArray(course.sections) || !course.sections.length) {
+    const lessons = course.lessons || [];
+    const modules = (course.modules || []).map((module, index) => ({
+      ...module,
+      lessons: lessons.filter((lesson) => Number(lesson.moduleIndex ?? -1) === index || lesson.moduleId === module.id),
+    }));
+    course.sections = [{
+      title: course.name || 'Course path',
+      slug: 'course-path',
+      shortDescription: course.blurb || '',
+      fullDescription: '',
+      thumbnailUrl: course.thumbnailUrl || '',
+      icon: '',
+      status: 'published',
+      estimatedMinutes: 0,
+      prerequisiteIds: [],
+      modules: modules.length ? modules : [blankModule(0)],
+    }];
+  }
+  course.sections.forEach((section, sectionIndex) => {
+    section.modules = Array.isArray(section.modules) && section.modules.length ? section.modules : [blankModule(0)];
+    section.prerequisiteIds = Array.isArray(section.prerequisiteIds) ? section.prerequisiteIds : [];
+    section.sortOrder = sectionIndex;
+    section.modules.forEach((module) => {
+      module.lessons = Array.isArray(module.lessons) && module.lessons.length ? module.lessons : [blankLesson()];
+    });
+  });
+  return course;
+}
+
+function cloneWithoutIds(value) {
+  const copy = JSON.parse(JSON.stringify(value || {}));
+  delete copy.id;
+  delete copy.sectionId;
+  delete copy.moduleId;
+  delete copy.courseId;
+  (copy.modules || []).forEach((module) => {
+    delete module.id;
+    delete module.sectionId;
+    (module.lessons || []).forEach((lesson) => {
+      delete lesson.id;
+      delete lesson.moduleId;
+    });
+  });
+  (copy.lessons || []).forEach((lesson) => {
+    delete lesson.id;
+    delete lesson.moduleId;
+  });
+  return copy;
 }
 
 async function renderEditor(id) {
@@ -310,15 +394,7 @@ async function renderEditor(id) {
     state.editor = blankCourse();
   } else {
     const data = await api(`/api/admin/course?id=${encodeURIComponent(id)}`);
-    state.editor = data.course;
-    if (!state.editor.modules?.length) state.editor.modules = [{ number: '01', title: '', time: '' }];
-    if (!state.editor.lessons?.length) {
-      state.editor.lessons = [{
-        ...(state.editor.lesson || {}),
-        isCurrent: true,
-        moduleIndex: 0,
-      }];
-    }
+    state.editor = ensureHierarchy(data.course);
   }
   paintEditor();
 }
@@ -386,17 +462,14 @@ function paintEditor() {
       </section>
 
       <section class="admin-section">
-        <p class="mini-eyebrow">SYLLABUS</p>
-        <h2>Modules students <em>unlock.</em></h2>
-        <div id="moduleList">${course.modules.map((module, index) => moduleFields(module, index)).join('')}</div>
-        <button class="admin-inline" type="button" id="addModule">Add module</button>
-      </section>
-
-      <section class="admin-section">
-        <p class="mini-eyebrow">LESSONS</p>
-        <h2>Videos, copy, <em>resources.</em></h2>
-        <div id="lessonList">${course.lessons.map((lesson, index) => lessonFields(lesson, index, course.modules.length)).join('')}</div>
-        <button class="admin-inline" type="button" id="addLesson">Add lesson</button>
+        <p class="mini-eyebrow">COURSE BUILDER</p>
+        <h2>Learning sections, <em>modules,</em> lessons.</h2>
+        <p class="admin-builder-copy">Students see this hierarchy after they buy the course. Add as many sections as the path needs — nothing here is hardcoded.</p>
+        <div class="admin-builder-toolbar">
+          <button class="button button-dark button-sm" type="button" id="addSection">Add learning section</button>
+          ${course.id ? `<a href="/course.html?course=${encodeURIComponent(course.id)}&preview=1" target="_blank" rel="noreferrer">Preview student view</a>` : ''}
+        </div>
+        <div class="admin-builder" id="builderTree">${(course.sections || []).map((section, sectionIndex) => sectionFields(section, sectionIndex, course)).join('')}</div>
       </section>
     </form>`;
 
@@ -406,56 +479,13 @@ function paintEditor() {
     event.preventDefault();
     await persistEditor({ publish: true });
   });
-  document.getElementById('addModule').addEventListener('click', () => {
+  document.getElementById('addSection')?.addEventListener('click', () => {
     syncEditorForm();
-    state.editor.modules.push({ number: String(state.editor.modules.length + 1).padStart(2, '0'), title: '', time: '' });
+    state.editor.sections.push(blankSection(state.editor.sections.length));
     state.dirty = true;
     paintEditor();
   });
-  document.getElementById('addLesson').addEventListener('click', () => {
-    syncEditorForm();
-    state.editor.lessons.push({ title: '', type: 'LESSON', minutes: 20, copy: '', moduleIndex: 0 });
-    state.dirty = true;
-    paintEditor();
-  });
-  content.querySelectorAll('[data-remove-module]').forEach((button) => button.addEventListener('click', () => {
-    syncEditorForm();
-    const index = Number(button.dataset.removeModule);
-    if (state.editor.modules.length <= 1) return;
-    state.editor.modules.splice(index, 1);
-    state.editor.lessons.forEach((lesson) => {
-      if (lesson.moduleIndex > index) lesson.moduleIndex -= 1;
-      if (lesson.moduleIndex === index) lesson.moduleIndex = Math.max(0, index - 1);
-    });
-    state.dirty = true;
-    paintEditor();
-  }));
-  content.querySelectorAll('[data-move-module]').forEach((button) => button.addEventListener('click', () => {
-    syncEditorForm();
-    const [index, delta] = button.dataset.moveModule.split(':').map(Number);
-    moveItem(state.editor.modules, index, delta);
-    state.editor.lessons.forEach((lesson) => {
-      if (lesson.moduleIndex === index) lesson.moduleIndex = index + delta;
-      else if (lesson.moduleIndex === index + delta) lesson.moduleIndex = index;
-    });
-    state.dirty = true;
-    paintEditor();
-  }));
-  content.querySelectorAll('[data-remove-lesson]').forEach((button) => button.addEventListener('click', () => {
-    syncEditorForm();
-    const index = Number(button.dataset.removeLesson);
-    if (state.editor.lessons.length <= 1) return;
-    state.editor.lessons.splice(index, 1);
-    state.dirty = true;
-    paintEditor();
-  }));
-  content.querySelectorAll('[data-move-lesson]').forEach((button) => button.addEventListener('click', () => {
-    syncEditorForm();
-    const [index, delta] = button.dataset.moveLesson.split(':').map(Number);
-    moveItem(state.editor.lessons, index, delta);
-    state.dirty = true;
-    paintEditor();
-  }));
+  bindBuilderActions();
   bindDropZone(content.querySelector('[data-drop="cover"]'), async (file) => {
     const url = await uploadFile(file, state.editor.id || 'drafts');
     syncEditorForm();
@@ -486,15 +516,32 @@ function paintEditor() {
       }
     });
   });
+  content.querySelectorAll('[data-section-upload]').forEach((input) => {
+    input.addEventListener('change', async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const [sectionIndex, field] = input.dataset.sectionUpload.split(':');
+      try {
+        const url = await uploadFile(file, state.editor.id || 'drafts');
+        syncEditorForm();
+        state.editor.sections[Number(sectionIndex)][field] = url;
+        state.dirty = true;
+        paintEditor();
+        showToast('Section image uploaded.', file.name);
+      } catch (error) {
+        showToast('Upload failed.', error.message);
+      }
+    });
+  });
   content.querySelectorAll('[data-lesson-upload]').forEach((input) => {
     input.addEventListener('change', async () => {
       const file = input.files?.[0];
       if (!file) return;
-      const [index, field] = input.dataset.lessonUpload.split(':');
+      const [sectionIndex, moduleIndex, lessonIndex, field] = input.dataset.lessonUpload.split(':');
       try {
         const url = await uploadFile(file, state.editor.id || 'drafts');
         syncEditorForm();
-        state.editor.lessons[Number(index)][field] = url;
+        state.editor.sections[Number(sectionIndex)].modules[Number(moduleIndex)].lessons[Number(lessonIndex)][field] = url;
         state.dirty = true;
         paintEditor();
         showToast('Lesson file uploaded.', file.name);
@@ -505,52 +552,285 @@ function paintEditor() {
   });
 }
 
-function moduleFields(module, index) {
+function sectionFields(section, sectionIndex, course) {
+  const prereqOptions = (course.sections || [])
+    .map((item, index) => {
+      if (index === sectionIndex || !item.id) return '';
+      const selected = (section.prerequisiteIds || []).includes(item.id) ? 'selected' : '';
+      return `<option value="${escapeHtml(item.id)}" ${selected}>${escapeHtml(item.title || `Section ${index + 1}`)}</option>`;
+    })
+    .join('');
+  const preview = course.id && section.slug
+    ? `<a href="/course.html?course=${encodeURIComponent(course.id)}&amp;section=${encodeURIComponent(section.slug)}&amp;preview=1" target="_blank" rel="noreferrer">Preview</a>`
+    : '';
   return `
-    <div class="admin-module">
-      <div class="admin-row-tools">
-        <button type="button" data-move-module="${index}:-1">Up</button>
-        <button type="button" data-move-module="${index}:1">Down</button>
-        <button type="button" data-remove-module="${index}">Remove</button>
+    <article class="admin-section-card" data-drop="s:${sectionIndex}">
+      <div class="admin-tree-head">
+        <button type="button" class="admin-drag" draggable="true" data-path="s:${sectionIndex}" aria-label="Drag learning section">☰</button>
+        <div>
+          <p class="mini-eyebrow">LEARNING SECTION ${String(sectionIndex + 1).padStart(2, '0')}</p>
+          <strong>${escapeHtml(section.title || 'Untitled section')}</strong>
+        </div>
+        <span class="admin-status ${section.status === 'published' ? 'published' : 'draft'}">${section.status === 'published' ? 'published' : 'draft'}</span>
+        <div class="admin-row-tools">
+          <button type="button" data-move="s:${sectionIndex}:-1">Up</button>
+          <button type="button" data-move="s:${sectionIndex}:1">Down</button>
+          <button type="button" data-toggle-status="${sectionIndex}">${section.status === 'published' ? 'Unpublish' : 'Publish'}</button>
+          <button type="button" data-dup="s:${sectionIndex}">Duplicate</button>
+          ${preview}
+          <button type="button" data-remove="s:${sectionIndex}">Delete</button>
+        </div>
       </div>
-      <label>Number<input name="module-number-${index}" value="${escapeHtml(module.number || '')}"></label>
-      <label>Title<input name="module-title-${index}" value="${escapeHtml(module.title || '')}"></label>
-      <label>Duration<input name="module-time-${index}" value="${escapeHtml(module.time || module.duration || '')}"></label>
-      <label>Description<textarea name="module-description-${index}">${escapeHtml(module.description || '')}</textarea></label>
+      <div class="admin-form-grid">
+        <label>Title<input name="section-title-${sectionIndex}" value="${escapeHtml(section.title || '')}" required></label>
+        <label>Slug<input name="section-slug-${sectionIndex}" value="${escapeHtml(section.slug || '')}" placeholder="learn-sql"></label>
+        <label class="wide">Short description<textarea name="section-short-${sectionIndex}">${escapeHtml(section.shortDescription || '')}</textarea></label>
+        <label class="wide">Full description<textarea name="section-full-${sectionIndex}">${escapeHtml(section.fullDescription || '')}</textarea></label>
+        <label>Icon / mark<input name="section-icon-${sectionIndex}" value="${escapeHtml(section.icon || '')}" placeholder="Optional emoji or short mark"></label>
+        <label>Estimated minutes<input name="section-minutes-${sectionIndex}" type="number" min="0" value="${escapeHtml(section.estimatedMinutes || 0)}"></label>
+        <label>Status
+          <select name="section-status-${sectionIndex}">
+            <option value="draft" ${section.status !== 'published' ? 'selected' : ''}>Draft</option>
+            <option value="published" ${section.status === 'published' ? 'selected' : ''}>Published</option>
+          </select>
+        </label>
+        <label>Prerequisites
+          <select name="section-prereq-${sectionIndex}" multiple>${prereqOptions || '<option disabled>Save once to link other sections</option>'}</select>
+        </label>
+        <label class="wide">Thumbnail URL<input name="section-thumb-${sectionIndex}" value="${escapeHtml(section.thumbnailUrl || '')}"></label>
+      </div>
+      <label class="admin-drop">Upload section thumbnail<input type="file" accept="image/*" data-section-upload="${sectionIndex}:thumbnailUrl"></label>
+      ${section.thumbnailUrl ? `<div class="admin-preview"><img src="${escapeHtml(section.thumbnailUrl)}" alt=""></div>` : ''}
+      <div class="admin-builder-toolbar">
+        <button class="admin-inline" type="button" data-add-module="${sectionIndex}">Add module</button>
+      </div>
+      ${(section.modules || []).map((module, moduleIndex) => moduleFields(module, sectionIndex, moduleIndex)).join('')}
+    </article>`;
+}
+
+function moduleFields(module, sectionIndex, moduleIndex) {
+  return `
+    <div class="admin-module" data-drop="m:${sectionIndex}:${moduleIndex}">
+      <div class="admin-tree-head">
+        <button type="button" class="admin-drag" draggable="true" data-path="m:${sectionIndex}:${moduleIndex}" aria-label="Drag module">☰</button>
+        <div>
+          <p class="mini-eyebrow">MODULE ${escapeHtml(module.number || String(moduleIndex + 1).padStart(2, '0'))}</p>
+          <strong>${escapeHtml(module.title || 'Untitled module')}</strong>
+        </div>
+        <div class="admin-row-tools">
+          <button type="button" data-move="m:${sectionIndex}:${moduleIndex}:-1">Up</button>
+          <button type="button" data-move="m:${sectionIndex}:${moduleIndex}:1">Down</button>
+          <button type="button" data-dup="m:${sectionIndex}:${moduleIndex}">Duplicate</button>
+          <button type="button" data-remove="m:${sectionIndex}:${moduleIndex}">Delete</button>
+        </div>
+      </div>
+      <label>Number<input name="module-number-${sectionIndex}-${moduleIndex}" value="${escapeHtml(module.number || '')}"></label>
+      <label>Title<input name="module-title-${sectionIndex}-${moduleIndex}" value="${escapeHtml(module.title || '')}"></label>
+      <label>Duration<input name="module-time-${sectionIndex}-${moduleIndex}" value="${escapeHtml(module.time || module.duration || '')}"></label>
+      <label>Description<textarea name="module-description-${sectionIndex}-${moduleIndex}">${escapeHtml(module.description || '')}</textarea></label>
+      <div class="admin-builder-toolbar">
+        <button class="admin-inline" type="button" data-add-lesson="${sectionIndex}:${moduleIndex}">Add lesson</button>
+      </div>
+      ${(module.lessons || []).map((lesson, lessonIndex) => lessonFields(lesson, sectionIndex, moduleIndex, lessonIndex)).join('')}
     </div>`;
 }
 
-function lessonFields(lesson, index, moduleCount) {
-  const options = Array.from({ length: moduleCount || 1 }, (_, moduleIndex) => {
-    const selected = Number(lesson.moduleIndex ?? 0) === moduleIndex ? 'selected' : '';
-    return `<option value="${moduleIndex}" ${selected}>Module ${moduleIndex + 1}</option>`;
-  }).join('');
+function lessonFields(lesson, sectionIndex, moduleIndex, lessonIndex) {
   return `
-    <div class="admin-lesson">
-      <div class="admin-row-tools">
-        <button type="button" data-move-lesson="${index}:-1">Up</button>
-        <button type="button" data-move-lesson="${index}:1">Down</button>
-        <button type="button" data-remove-lesson="${index}">Remove</button>
+    <div class="admin-lesson" data-drop="l:${sectionIndex}:${moduleIndex}:${lessonIndex}">
+      <div class="admin-tree-head">
+        <button type="button" class="admin-drag" draggable="true" data-path="l:${sectionIndex}:${moduleIndex}:${lessonIndex}" aria-label="Drag lesson">☰</button>
+        <div>
+          <p class="mini-eyebrow">${escapeHtml(lesson.type || 'LESSON')}</p>
+          <strong>${escapeHtml(lesson.title || 'Untitled lesson')}</strong>
+        </div>
+        <div class="admin-row-tools">
+          <button type="button" data-move="l:${sectionIndex}:${moduleIndex}:${lessonIndex}:-1">Up</button>
+          <button type="button" data-move="l:${sectionIndex}:${moduleIndex}:${lessonIndex}:1">Down</button>
+          <button type="button" data-dup="l:${sectionIndex}:${moduleIndex}:${lessonIndex}">Duplicate</button>
+          <button type="button" data-remove="l:${sectionIndex}:${moduleIndex}:${lessonIndex}">Delete</button>
+        </div>
       </div>
-      <label>Title<input name="lesson-title-${index}" value="${escapeHtml(lesson.title || '')}"></label>
-      <label>Type<input name="lesson-type-${index}" value="${escapeHtml(lesson.type || 'LESSON')}"></label>
-      <label>Minutes<input name="lesson-minutes-${index}" type="number" value="${escapeHtml(lesson.minutes || 0)}"></label>
-      <label>Module<select name="lesson-module-${index}">${options}</select></label>
+      <label>Title<input name="lesson-title-${sectionIndex}-${moduleIndex}-${lessonIndex}" value="${escapeHtml(lesson.title || '')}"></label>
+      <label>Type<input name="lesson-type-${sectionIndex}-${moduleIndex}-${lessonIndex}" value="${escapeHtml(lesson.type || 'LESSON')}"></label>
+      <label>Minutes<input name="lesson-minutes-${sectionIndex}-${moduleIndex}-${lessonIndex}" type="number" value="${escapeHtml(lesson.minutes || 0)}"></label>
       <label>Current lesson
-        <select name="lesson-current-${index}">
+        <select name="lesson-current-${sectionIndex}-${moduleIndex}-${lessonIndex}">
           <option value="false" ${!lesson.isCurrent ? 'selected' : ''}>No</option>
           <option value="true" ${lesson.isCurrent ? 'selected' : ''}>Yes</option>
         </select>
       </label>
-      <label>Copy<textarea name="lesson-copy-${index}">${escapeHtml(lesson.copy || '')}</textarea></label>
-      <label>Video URL<input name="lesson-video-${index}" value="${escapeHtml(lesson.videoUrl || '')}"></label>
-      <label class="admin-drop">Upload lesson video<input type="file" accept="video/*" data-lesson-upload="${index}:videoUrl"></label>
-      <label>Image URL<input name="lesson-image-${index}" value="${escapeHtml(lesson.imageUrl || '')}"></label>
-      <label class="admin-drop">Upload lesson image<input type="file" accept="image/*" data-lesson-upload="${index}:imageUrl"></label>
-      <label>Resource URL<input name="lesson-resource-${index}" value="${escapeHtml(lesson.resourceUrl || '')}"></label>
-      <label>Resource label<input name="lesson-resource-label-${index}" value="${escapeHtml(lesson.resourceLabel || '')}"></label>
+      <label>Copy<textarea name="lesson-copy-${sectionIndex}-${moduleIndex}-${lessonIndex}">${escapeHtml(lesson.copy || '')}</textarea></label>
+      <label>Video URL<input name="lesson-video-${sectionIndex}-${moduleIndex}-${lessonIndex}" value="${escapeHtml(lesson.videoUrl || '')}"></label>
+      <label class="admin-drop">Upload lesson video<input type="file" accept="video/*" data-lesson-upload="${sectionIndex}:${moduleIndex}:${lessonIndex}:videoUrl"></label>
+      <label>Image URL<input name="lesson-image-${sectionIndex}-${moduleIndex}-${lessonIndex}" value="${escapeHtml(lesson.imageUrl || '')}"></label>
+      <label class="admin-drop">Upload lesson image<input type="file" accept="image/*" data-lesson-upload="${sectionIndex}:${moduleIndex}:${lessonIndex}:imageUrl"></label>
+      <label>Resource URL<input name="lesson-resource-${sectionIndex}-${moduleIndex}-${lessonIndex}" value="${escapeHtml(lesson.resourceUrl || '')}"></label>
+      <label>Resource label<input name="lesson-resource-label-${sectionIndex}-${moduleIndex}-${lessonIndex}" value="${escapeHtml(lesson.resourceLabel || '')}"></label>
       ${lesson.videoUrl ? `<div class="admin-preview"><video src="${escapeHtml(lesson.videoUrl)}" controls></video></div>` : ''}
     </div>`;
+}
+
+function bindBuilderActions() {
+  content.querySelectorAll('[data-add-module]').forEach((button) => button.addEventListener('click', () => {
+    syncEditorForm();
+    const section = state.editor.sections[Number(button.dataset.addModule)];
+    section.modules.push(blankModule(section.modules.length));
+    state.dirty = true;
+    paintEditor();
+  }));
+  content.querySelectorAll('[data-add-lesson]').forEach((button) => button.addEventListener('click', () => {
+    syncEditorForm();
+    const [sectionIndex, moduleIndex] = button.dataset.addLesson.split(':').map(Number);
+    state.editor.sections[sectionIndex].modules[moduleIndex].lessons.push(blankLesson());
+    state.dirty = true;
+    paintEditor();
+  }));
+  content.querySelectorAll('[data-toggle-status]').forEach((button) => button.addEventListener('click', () => {
+    syncEditorForm();
+    const section = state.editor.sections[Number(button.dataset.toggleStatus)];
+    section.status = section.status === 'published' ? 'draft' : 'published';
+    state.dirty = true;
+    paintEditor();
+  }));
+  content.querySelectorAll('[data-dup]').forEach((button) => button.addEventListener('click', () => {
+    syncEditorForm();
+    duplicatePath(parsePath(button.dataset.dup));
+  }));
+  content.querySelectorAll('[data-remove]').forEach((button) => button.addEventListener('click', () => {
+    syncEditorForm();
+    removePath(parsePath(button.dataset.remove));
+  }));
+  content.querySelectorAll('[data-move]').forEach((button) => button.addEventListener('click', () => {
+    syncEditorForm();
+    const parts = button.dataset.move.split(':');
+    const delta = Number(parts.pop());
+    nudgePath(parsePath(parts.join(':')), delta);
+  }));
+  content.querySelectorAll('.admin-drag').forEach((handle) => {
+    handle.addEventListener('dragstart', (event) => {
+      event.stopPropagation();
+      event.dataTransfer.setData('text/plain', handle.dataset.path);
+      event.dataTransfer.effectAllowed = 'move';
+      handle.closest('[data-drop]')?.classList.add('dragging');
+    });
+    handle.addEventListener('dragend', () => {
+      content.querySelectorAll('.dragging, .drop-target').forEach((node) => node.classList.remove('dragging', 'drop-target'));
+    });
+  });
+  content.querySelectorAll('[data-drop]').forEach((node) => {
+    node.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      node.classList.add('drop-target');
+    });
+    node.addEventListener('dragleave', () => node.classList.remove('drop-target'));
+    node.addEventListener('drop', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      node.classList.remove('drop-target');
+      const from = parsePath(event.dataTransfer.getData('text/plain'));
+      const to = parsePath(node.dataset.drop);
+      syncEditorForm();
+      relocatePath(from, to);
+    });
+  });
+}
+
+function parsePath(value) {
+  const [kind, ...parts] = String(value || '').split(':');
+  return { kind, indexes: parts.map(Number) };
+}
+
+function duplicatePath(path) {
+  const sections = state.editor.sections;
+  if (path.kind === 's') {
+    const copy = cloneWithoutIds(sections[path.indexes[0]]);
+    copy.title = `${copy.title || 'Section'} copy`;
+    copy.slug = '';
+    copy.status = 'draft';
+    sections.splice(path.indexes[0] + 1, 0, copy);
+  } else if (path.kind === 'm') {
+    const list = sections[path.indexes[0]].modules;
+    const copy = cloneWithoutIds(list[path.indexes[1]]);
+    copy.title = `${copy.title || 'Module'} copy`;
+    list.splice(path.indexes[1] + 1, 0, copy);
+  } else if (path.kind === 'l') {
+    const list = sections[path.indexes[0]].modules[path.indexes[1]].lessons;
+    const copy = cloneWithoutIds(list[path.indexes[2]]);
+    copy.title = `${copy.title || 'Lesson'} copy`;
+    copy.isCurrent = false;
+    list.splice(path.indexes[2] + 1, 0, copy);
+  }
+  state.dirty = true;
+  paintEditor();
+}
+
+function removePath(path) {
+  const sections = state.editor.sections;
+  if (path.kind === 's') {
+    if (sections.length <= 1) {
+      showToast('Keep one section.', 'A course needs at least one learning section.');
+      return;
+    }
+    if (!confirm('Delete this learning section and its modules?')) return;
+    sections.splice(path.indexes[0], 1);
+  } else if (path.kind === 'm') {
+    const list = sections[path.indexes[0]].modules;
+    if (list.length <= 1) {
+      showToast('Keep one module.', 'Add another module before deleting this one.');
+      return;
+    }
+    if (!confirm('Delete this module and its lessons?')) return;
+    list.splice(path.indexes[1], 1);
+  } else if (path.kind === 'l') {
+    const list = sections[path.indexes[0]].modules[path.indexes[1]].lessons;
+    if (list.length <= 1) {
+      showToast('Keep one lesson.', 'Add another lesson before deleting this one.');
+      return;
+    }
+    list.splice(path.indexes[2], 1);
+  }
+  state.dirty = true;
+  paintEditor();
+}
+
+function nudgePath(path, delta) {
+  if (path.kind === 's') moveItem(state.editor.sections, path.indexes[0], delta);
+  if (path.kind === 'm') moveItem(state.editor.sections[path.indexes[0]].modules, path.indexes[1], delta);
+  if (path.kind === 'l') moveItem(state.editor.sections[path.indexes[0]].modules[path.indexes[1]].lessons, path.indexes[2], delta);
+  state.dirty = true;
+  paintEditor();
+}
+
+function relocatePath(from, to) {
+  if (!from?.kind || !to?.kind) return;
+  const sections = state.editor.sections;
+  if (from.kind === 's' && to.kind === 's') {
+    const [item] = sections.splice(from.indexes[0], 1);
+    let dest = to.indexes[0];
+    if (from.indexes[0] < dest) dest -= 1;
+    sections.splice(dest, 0, item);
+  } else if (from.kind === 'm' && (to.kind === 'm' || to.kind === 's')) {
+    const [item] = sections[from.indexes[0]].modules.splice(from.indexes[1], 1);
+    const destSection = to.indexes[0];
+    const destList = sections[destSection].modules;
+    let destIndex = to.kind === 'm' ? to.indexes[1] : destList.length;
+    if (from.indexes[0] === destSection && from.indexes[1] < destIndex) destIndex -= 1;
+    destList.splice(Math.max(0, destIndex), 0, item);
+  } else if (from.kind === 'l' && (to.kind === 'l' || to.kind === 'm')) {
+    const [item] = sections[from.indexes[0]].modules[from.indexes[1]].lessons.splice(from.indexes[2], 1);
+    const destSection = to.indexes[0];
+    const destModule = to.kind === 'l' ? to.indexes[1] : to.indexes[1];
+    const destList = sections[destSection].modules[destModule].lessons;
+    let destIndex = to.kind === 'l' ? to.indexes[2] : destList.length;
+    if (from.indexes[0] === destSection && from.indexes[1] === destModule && from.indexes[2] < destIndex) destIndex -= 1;
+    destList.splice(Math.max(0, destIndex), 0, item);
+  } else {
+    return;
+  }
+  state.dirty = true;
+  paintEditor();
 }
 
 function syncEditorForm() {
@@ -574,27 +854,39 @@ function syncEditorForm() {
   course.coverImageUrl = String(data.get('coverImageUrl') || '');
   course.thumbnailUrl = String(data.get('thumbnailUrl') || '');
   course.promoVideoUrl = String(data.get('promoVideoUrl') || '');
-  course.modules = course.modules.map((module, index) => ({
-    ...module,
-    number: String(data.get(`module-number-${index}`) || ''),
-    title: String(data.get(`module-title-${index}`) || ''),
-    time: String(data.get(`module-time-${index}`) || ''),
-    description: String(data.get(`module-description-${index}`) || ''),
+  course.sections = (course.sections || []).map((section, sectionIndex) => ({
+    ...section,
+    title: String(data.get(`section-title-${sectionIndex}`) || ''),
+    slug: String(data.get(`section-slug-${sectionIndex}`) || ''),
+    shortDescription: String(data.get(`section-short-${sectionIndex}`) || ''),
+    fullDescription: String(data.get(`section-full-${sectionIndex}`) || ''),
+    icon: String(data.get(`section-icon-${sectionIndex}`) || ''),
+    estimatedMinutes: Number(data.get(`section-minutes-${sectionIndex}`) || 0),
+    status: data.get(`section-status-${sectionIndex}`) === 'published' ? 'published' : 'draft',
+    thumbnailUrl: String(data.get(`section-thumb-${sectionIndex}`) || section.thumbnailUrl || ''),
+    prerequisiteIds: data.getAll(`section-prereq-${sectionIndex}`).filter(Boolean),
+    modules: (section.modules || []).map((module, moduleIndex) => ({
+      ...module,
+      number: String(data.get(`module-number-${sectionIndex}-${moduleIndex}`) || ''),
+      title: String(data.get(`module-title-${sectionIndex}-${moduleIndex}`) || ''),
+      time: String(data.get(`module-time-${sectionIndex}-${moduleIndex}`) || ''),
+      description: String(data.get(`module-description-${sectionIndex}-${moduleIndex}`) || ''),
+      lessons: (module.lessons || []).map((lesson, lessonIndex) => ({
+        ...lesson,
+        title: String(data.get(`lesson-title-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || ''),
+        type: String(data.get(`lesson-type-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || 'LESSON'),
+        minutes: Number(data.get(`lesson-minutes-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || 0),
+        isCurrent: data.get(`lesson-current-${sectionIndex}-${moduleIndex}-${lessonIndex}`) === 'true',
+        copy: String(data.get(`lesson-copy-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || ''),
+        videoUrl: String(data.get(`lesson-video-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || lesson.videoUrl || ''),
+        imageUrl: String(data.get(`lesson-image-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || lesson.imageUrl || ''),
+        resourceUrl: String(data.get(`lesson-resource-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || ''),
+        resourceLabel: String(data.get(`lesson-resource-label-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || ''),
+      })),
+    })),
   }));
-  course.lessons = course.lessons.map((lesson, index) => ({
-    ...lesson,
-    title: String(data.get(`lesson-title-${index}`) || ''),
-    type: String(data.get(`lesson-type-${index}`) || 'LESSON'),
-    minutes: Number(data.get(`lesson-minutes-${index}`) || 0),
-    moduleIndex: Number(data.get(`lesson-module-${index}`) || 0),
-    isCurrent: data.get(`lesson-current-${index}`) === 'true',
-    copy: String(data.get(`lesson-copy-${index}`) || ''),
-    videoUrl: String(data.get(`lesson-video-${index}`) || lesson.videoUrl || ''),
-    imageUrl: String(data.get(`lesson-image-${index}`) || lesson.imageUrl || ''),
-    resourceUrl: String(data.get(`lesson-resource-${index}`) || ''),
-    resourceLabel: String(data.get(`lesson-resource-label-${index}`) || ''),
-  }));
-  const current = course.lessons.find((lesson) => lesson.isCurrent) || course.lessons[0];
+  const current = course.sections.flatMap((section) => section.modules.flatMap((module) => module.lessons)).find((lesson) => lesson.isCurrent)
+    || course.sections[0]?.modules?.[0]?.lessons?.[0];
   course.lesson = current || course.lesson;
 }
 

@@ -67,16 +67,39 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
-function resumeLearning() {
-  openModal(`<p class="mini-eyebrow">MODULE 06 · LESSON 03</p><h2>Find the story<br />in the <em>data.</em></h2><p>Today you’ll turn a real retail dataset into an insight your stakeholder can use. Your saved notes and project brief are ready.</p><button class="button button-lime" id="startLesson">Start the 42 minute sprint <span>→</span></button>`);
-  document.getElementById('startLesson').addEventListener('click', () => {
-    closeModal();
-    showToast('Lesson opened.', 'Your sprint timer and notes are ready.');
-  });
+async function goContinue(courseId) {
+  const targetId = courseId || primaryCourse()?.id;
+  if (!targetId || !window.GradflowEnrollment.isEnrolled(targetId)) {
+    goToCourse(targetId);
+    return;
+  }
+  const detail = await window.GradflowEnrollment.loadStudentCourse(targetId);
+  if (detail?.resume?.lessonId) {
+    window.location.href = window.GradflowEnrollment.courseUrl(targetId, {
+      section: detail.resume.sectionSlug,
+      lesson: detail.resume.lessonId,
+    });
+    return;
+  }
+  goToCourse(targetId);
 }
 
-document.getElementById('continueButton').addEventListener('click', () => requireAnalytics(resumeLearning));
-document.getElementById('resumeLesson').addEventListener('click', () => requireAnalytics(resumeLearning));
+document.getElementById('continueButton').addEventListener('click', () => {
+  const course = primaryCourse();
+  if (!course || !window.GradflowEnrollment.isEnrolled(course.id)) {
+    goToCourse(course?.id);
+    return;
+  }
+  goContinue(course.id);
+});
+document.getElementById('resumeLesson').addEventListener('click', () => {
+  const course = primaryCourse();
+  if (!course || !window.GradflowEnrollment.isEnrolled(course.id)) {
+    goToCourse(course?.id);
+    return;
+  }
+  goContinue(course.id);
+});
 
 document.querySelectorAll('.task-list input').forEach((input) => {
   input.addEventListener('change', () => {
@@ -95,7 +118,7 @@ document.getElementById('clearTasks').addEventListener('click', () => {
 document.querySelectorAll('.open-project').forEach((button) => {
   button.addEventListener('click', () => {
     if (!analyticsUnlocked()) {
-      goToCourse(ANALYTICS_COURSE);
+      goToCourse(primaryCourse()?.id);
       return;
     }
     const project = button.dataset.project;
@@ -106,7 +129,7 @@ document.querySelectorAll('.open-project').forEach((button) => {
 
 function newProject() {
   if (!analyticsUnlocked()) {
-    goToCourse(ANALYTICS_COURSE);
+    goToCourse(primaryCourse()?.id);
     return;
   }
   openModal(`<p class="mini-eyebrow">GUIDED PROJECTS</p><h2>Choose your next<br /><em>challenge.</em></h2><p>Pick a real-world brief to add to your portfolio. Your mentor will help you focus it into a clear case study.</p><button class="button button-lime" id="browseBriefs">Browse project briefs <span>→</span></button>`);
@@ -231,6 +254,16 @@ async function syncCourseAccess() {
       : 'Publish a course in admin to list it here.';
   continueButton.innerHTML = unlocked ? 'Continue learning <span>→</span>' : course ? 'Pay and enroll to unlock <span>→</span>' : 'Browse courses <span>→</span>';
   document.getElementById('resumeLesson').innerHTML = unlocked ? 'Resume sprint <span>→</span>' : 'Unlock this lesson <span>→</span>';
+  let percent = 0;
+  if (unlocked) {
+    const detail = await window.GradflowEnrollment.loadStudentCourse(course.id);
+    percent = detail?.progress?.percent || 0;
+    if (detail?.resume?.label) continueButton.innerHTML = `${detail.resume.label} <span>→</span>`;
+  }
+  const progressLabel = document.getElementById('courseProgress');
+  const progressBar = document.getElementById('progressBar');
+  if (progressLabel) progressLabel.textContent = String(percent);
+  if (progressBar) progressBar.style.width = `${percent}%`;
 
   const list = document.getElementById('courseAccessList');
   list.replaceChildren();

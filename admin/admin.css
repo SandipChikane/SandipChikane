@@ -222,9 +222,63 @@
   padding: 8px 0;
   outline: 0;
 }
+.admin-builder-copy {
+  max-width: 620px;
+  color: #5d7169;
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+.admin-builder-toolbar {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 12px 0 16px;
+}
+.admin-section-card {
+  border: 1px solid var(--dash-line);
+  background: #fffdfa;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.admin-tree-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.admin-tree-head strong {
+  display: block;
+  letter-spacing: -0.4px;
+}
+.admin-drag {
+  border: 1px solid var(--dash-line);
+  background: #eef3ea;
+  width: 34px;
+  height: 34px;
+  cursor: grab;
+  font-size: 14px;
+  color: #3d524b;
+}
+.admin-drag:active { cursor: grabbing; }
+.admin-section-card.drop-target,
+.admin-module.drop-target,
+.admin-lesson.drop-target {
+  outline: 2px solid #0b2923;
+  background: #eef6dc;
+}
+.admin-section-card.dragging,
+.admin-module.dragging,
+.admin-lesson.dragging { opacity: 0.55; }
+.admin-module { margin-left: 18px; }
+.admin-lesson { margin-left: 18px; background: #f7f5ee; }
+.admin-form select[multiple] { min-height: 72px; border: 1px solid #d5ddd8; padding: 6px; }
 @media (max-width: 900px) {
   .admin-kpis,
   .admin-grid,
   .admin-form-grid,
   .admin-media-grid { grid-template-columns: 1fr; }
+  .admin-module,
+  .admin-lesson { margin-left: 0; }
 }
