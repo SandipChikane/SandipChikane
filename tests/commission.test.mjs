@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { applyPercentBps, percentToBps, rupeesToPaise } from '../lib/money.mjs';
 import { calculateReferralCommission, snapshotCommission } from '../lib/commission.mjs';
+import { normalizeReferralSettingsForm } from '../lib/referral-settings.mjs';
 
 function settings({ global = {}, product = {} } = {}) {
   return {
@@ -106,6 +107,19 @@ describe('calculateReferralCommission', () => {
       }),
     });
     assert.equal(result.commissionPaise, 20000);
+  });
+
+  it('reads rupee and percent form fields instead of stale flattened paise', () => {
+    const saved = normalizeReferralSettingsForm({
+      referralProgramEnabled: 'true',
+      referralDefaultPercentBps: 0,
+      referralDefaultPercent: '10',
+      referralMinWithdrawalPaise: 0,
+      referralMinWithdrawalRupees: '100',
+    });
+    assert.equal(saved.defaultPercentBps, 1000);
+    assert.equal(saved.minWithdrawalPaise, 10000);
+    assert.equal(saved.programEnabled, true);
   });
 
   it('enforces a minimum eligible order value', () => {
