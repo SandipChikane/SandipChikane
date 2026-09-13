@@ -113,6 +113,7 @@ dashMenu.addEventListener('click', () => sidebar.classList.toggle('open'));
 document.querySelectorAll('.dash-nav a').forEach((link) => link.addEventListener('click', () => sidebar.classList.remove('open')));
 
 async function syncCourseAccess() {
+  await window.GradflowEnrollment.loadPublishedCatalog();
   await window.GradflowEnrollment.refreshFromServer();
   const unlocked = analyticsUnlocked();
   const banner = document.getElementById('learning');

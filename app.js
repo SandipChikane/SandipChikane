@@ -119,11 +119,58 @@ document.getElementById('prevStory')?.addEventListener('click', () => {
   storiesTrack.style.transform = `translateX(-${storyPosition * 28}%)`;
 });
 
-document.querySelectorAll('[data-access-for]').forEach((row) => {
-  const enrolled = window.GradflowEnrollment.isEnrolled(row.dataset.accessFor);
-  const pill = row.querySelector('.access-pill');
-  if (!pill) return;
-  pill.classList.toggle('locked', !enrolled);
-  pill.classList.toggle('enrolled', enrolled);
-  pill.textContent = enrolled ? 'Enrolled' : 'Locked';
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function syncAccessPills() {
+  document.querySelectorAll('[data-access-for]').forEach((row) => {
+    const enrolled = window.GradflowEnrollment.isEnrolled(row.dataset.accessFor);
+    const pill = row.querySelector('.access-pill');
+    if (!pill) return;
+    pill.classList.toggle('locked', !enrolled);
+    pill.classList.toggle('enrolled', enrolled);
+    pill.textContent = enrolled ? 'Enrolled' : 'Locked';
+    const price = row.querySelector('.course-price');
+    const course = window.GradflowEnrollment.courseById(row.dataset.accessFor);
+    if (price && course) price.textContent = window.GradflowEnrollment.formatPrice(course.price);
+  });
+}
+
+syncAccessPills();
+
+window.GradflowEnrollment.publicConfig?.().then((config) => {
+  const copy = document.getElementById('announcementCopy');
+  if (copy && config?.announcement) copy.textContent = config.announcement;
+});
+
+window.GradflowEnrollment.loadPublishedCatalog?.().then(() => {
+  syncAccessPills();
+  const grid = document.querySelector('.course-grid');
+  if (!grid) return;
+  const existing = new Set([...document.querySelectorAll('[data-course-id]')].map((node) => node.dataset.courseId));
+  window.GradflowEnrollment.catalog.forEach((course) => {
+    if (existing.has(course.id) || course.status === 'archived') return;
+    const card = document.createElement('article');
+    card.className = 'course-card compact-card';
+    card.dataset.category = course.category || 'analytics';
+    card.innerHTML = `
+      <div class="compact-icon">＋</div>
+      <div>
+        <div class="course-meta"><span>${escapeHtml((course.category || 'course').toUpperCase())}</span><span>${escapeHtml(course.weeks || 0)} WEEKS</span></div>
+        <h3>${escapeHtml(course.name)}</h3>
+        <p>${escapeHtml(course.blurb || '')}</p>
+        <div class="access-row" data-access-for="${escapeHtml(course.id)}">
+          <span class="course-price">${window.GradflowEnrollment.formatPrice(course.price)}</span>
+          <span class="access-pill locked">Locked</span>
+        </div>
+      </div>
+      <button class="round-arrow" data-course-id="${escapeHtml(course.id)}" data-course="${escapeHtml(course.name)}" aria-label="Open ${escapeHtml(course.name)}">↗</button>`;
+    grid.appendChild(card);
+  });
+  syncAccessPills();
 });

@@ -100,11 +100,12 @@ describe('handlers without credentials', () => {
     assert.equal(result.body.paid, undefined);
   });
 
-  it('public-config reports payments as not ready', () => {
-    const result = api.publicConfig();
+  it('public-config reports payments as not ready', async () => {
+    const result = await api.publicConfig();
     assert.equal(result.status, 200);
     assert.equal(result.body.paymentsReady, false);
     assert.equal(result.body.supabaseReady, false);
+    assert.equal(result.body.announcement, '');
   });
 });
 

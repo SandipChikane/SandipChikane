@@ -3,8 +3,9 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import './lib/load-env.mjs';
+import { adminHandlers, dispatchAdmin } from './lib/admin-http.mjs';
 import { createHandlers } from './lib/handlers.mjs';
-import { readRawBody, sendJson } from './lib/http.mjs';
+import { readRawBody, sendJson, sendResult } from './lib/http.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 4173;
@@ -35,6 +36,29 @@ const routes = {
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
+    if (url.pathname === '/api/catalog') {
+      sendResult(res, await adminHandlers.publicCatalog());
+      return;
+    }
+    if (url.pathname === '/api/catalog-course') {
+      sendResult(res, await adminHandlers.publicCourse(Object.fromEntries(url.searchParams.entries()), req));
+      return;
+    }
+    if (url.pathname.startsWith('/api/admin')) {
+      const query = Object.fromEntries(url.searchParams.entries());
+      const rawBody = req.method === 'GET' || req.method === 'HEAD' ? '' : await readRawBody(req);
+      const body = rawBody ? JSON.parse(rawBody) : {};
+      if (req.method === 'DELETE' && rawBody) Object.assign(query, body);
+      const result = await dispatchAdmin({
+        req,
+        method: req.method,
+        path: url.pathname,
+        query,
+        body,
+      });
+      sendResult(res, result);
+      return;
+    }
     const route = routes[`${req.method} ${url.pathname}`];
     if (route) {
       const query = Object.fromEntries(url.searchParams.entries());

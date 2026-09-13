@@ -210,6 +210,30 @@ async function apiRequest(url, options) {
   return { ok: response.ok, status: response.status, data };
 }
 
+async function loadPublishedCatalog() {
+  try {
+    const result = await apiRequest('/api/catalog');
+    const remote = result.data.courses || [];
+    if (!remote.length) return COURSE_CATALOG;
+    remote.forEach((incoming) => {
+      const index = COURSE_CATALOG.findIndex((course) => course.id === incoming.id);
+      const previous = COURSE_CATALOG[index] || {};
+      const next = {
+        ...previous,
+        ...incoming,
+        modules: incoming.modules?.length ? incoming.modules : previous.modules || [],
+        lesson: incoming.lesson?.title ? incoming.lesson : previous.lesson,
+        tools: incoming.tools?.length ? incoming.tools : previous.tools || [],
+      };
+      if (index >= 0) COURSE_CATALOG[index] = next;
+      else COURSE_CATALOG.push(next);
+    });
+    return COURSE_CATALOG;
+  } catch {
+    return COURSE_CATALOG;
+  }
+}
+
 async function publicConfig() {
   try {
     const result = await apiRequest('/api/public-config');
@@ -289,6 +313,7 @@ window.GradflowEnrollment = {
   isEnrolled,
   cacheEnrollment,
   publicConfig,
+  loadPublishedCatalog,
   refreshFromServer,
   createOrder,
   verifyPayment,

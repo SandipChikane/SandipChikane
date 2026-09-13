@@ -1,5 +1,5 @@
 const params = new URLSearchParams(window.location.search);
-const course = window.GradflowEnrollment.courseById(params.get('course'))
+let course = window.GradflowEnrollment.courseById(params.get('course'))
   || window.GradflowEnrollment.courseByName(params.get('course'));
 const lockedState = document.getElementById('lockedState');
 const unlockedState = document.getElementById('unlockedState');
@@ -35,15 +35,25 @@ function renderUnlocked() {
   }
   const modules = document.getElementById('moduleList');
   modules.replaceChildren();
-  course.modules.forEach((module) => {
+  (course.modules || []).forEach((module) => {
     const item = document.createElement('li');
     item.innerHTML = `<b>${module.number}</b><span>${module.title}</span><span>${module.time}</span>`;
     modules.appendChild(item);
   });
-  document.getElementById('lessonType').textContent = `${course.lesson.type} · MODULE ${course.lesson.number}`;
-  document.getElementById('lessonTitle').textContent = course.lesson.title;
-  document.getElementById('lessonCopy').textContent = course.lesson.copy;
-  document.getElementById('lessonTime').textContent = `${course.lesson.minutes} min · ${course.tools.join(' · ')}`;
+  const lesson = course.lesson || {};
+  document.getElementById('lessonType').textContent = `${lesson.type || 'LESSON'} · MODULE ${lesson.number || ''}`;
+  document.getElementById('lessonTitle').textContent = lesson.title || course.name;
+  document.getElementById('lessonCopy').textContent = lesson.copy || course.blurb || '';
+  document.getElementById('lessonTime').textContent = `${lesson.minutes || 0} min · ${(course.tools || []).join(' · ')}`;
+  fillMedia('lessonMedia', lesson.videoUrl || course.promoVideoUrl, lesson.imageUrl || course.coverImageUrl);
+  const resource = document.getElementById('lessonResource');
+  if (lesson.resourceUrl) {
+    resource.hidden = false;
+    resource.innerHTML = `<a class="arrow-link" href="${lesson.resourceUrl}" target="_blank" rel="noreferrer">${lesson.resourceLabel || 'Download resource'} <span>↗</span></a>`;
+  } else {
+    resource.hidden = true;
+    resource.replaceChildren();
+  }
   lockedState.hidden = true;
   unlockedState.hidden = false;
   missingState.hidden = true;
@@ -56,6 +66,7 @@ function renderLocked(config = {}) {
   document.getElementById('lockedBlurb').textContent = `${course.blurb} Enroll to open the syllabus, current lesson, and ${course.project}.`;
   document.getElementById('lockedPrice').textContent = window.GradflowEnrollment.formatPrice(course.price);
   document.getElementById('lockedMeta').textContent = `${course.weeks} weeks · ${course.tools.join(' · ')}`;
+  fillMedia('lockedMedia', course.promoVideoUrl, course.coverImageUrl || course.thumbnailUrl);
   const email = window.GradflowEnrollment.getStudentEmail();
   const college = window.GradflowEnrollment.getStudentCollege();
   if (email) document.getElementById('enrollEmail').value = email;
@@ -79,7 +90,47 @@ async function finishEnrollment(record) {
   unlockedState.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function fillMedia(id, videoUrl, imageUrl) {
+  const node = document.getElementById(id);
+  if (!node) return;
+  node.replaceChildren();
+  if (videoUrl) {
+    const video = document.createElement('video');
+    video.src = videoUrl;
+    video.controls = true;
+    video.playsInline = true;
+    node.appendChild(video);
+    node.hidden = false;
+    return;
+  }
+  if (imageUrl) {
+    const image = document.createElement('img');
+    image.src = imageUrl;
+    image.alt = '';
+    node.appendChild(image);
+    node.hidden = false;
+    return;
+  }
+  node.hidden = true;
+}
+
+async function loadPreviewCourse(id) {
+  const response = await fetch(`/api/catalog-course?id=${encodeURIComponent(id)}&preview=1`, {
+    credentials: 'same-origin',
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.course) return null;
+  return { ...data.course, preview: Boolean(data.preview) };
+}
+
 async function boot() {
+  await window.GradflowEnrollment.loadPublishedCatalog();
+  course = window.GradflowEnrollment.courseById(params.get('course'))
+    || window.GradflowEnrollment.courseByName(params.get('course'));
+  if (params.get('preview') === '1' && params.get('course')) {
+    const preview = await loadPreviewCourse(params.get('course'));
+    if (preview) course = preview;
+  }
   if (!course) {
     missingState.hidden = false;
     lockedState.hidden = true;
@@ -92,6 +143,11 @@ async function boot() {
     window.GradflowEnrollment.refreshFromServer(),
   ]);
 
+  if (course.preview) {
+    renderUnlocked();
+    showToast('Admin preview.', 'Draft courses stay hidden from students until you publish.');
+    return;
+  }
   if (window.GradflowEnrollment.isEnrolled(course.id)) {
     renderUnlocked();
     return;
