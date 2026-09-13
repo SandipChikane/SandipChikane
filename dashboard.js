@@ -112,7 +112,8 @@ const sidebar = document.querySelector('.dash-sidebar');
 dashMenu.addEventListener('click', () => sidebar.classList.toggle('open'));
 document.querySelectorAll('.dash-nav a').forEach((link) => link.addEventListener('click', () => sidebar.classList.remove('open')));
 
-(function syncCourseAccess() {
+async function syncCourseAccess() {
+  await window.GradflowEnrollment.refreshFromServer();
   const unlocked = analyticsUnlocked();
   const banner = document.getElementById('learning');
   const lesson = document.getElementById('lessonCard');
@@ -136,4 +137,6 @@ document.querySelectorAll('.dash-nav a').forEach((link) => link.addEventListener
     link.innerHTML = `<span><strong>${course.name}</strong><small>${enrolled ? 'Paid and enrolled — open content' : `${window.GradflowEnrollment.formatPrice(course.price)} · locked until you enroll`}</small></span><span class="access-pill ${enrolled ? 'enrolled' : 'locked'}">${enrolled ? 'Enrolled' : 'Locked'}</span>`;
     list.appendChild(link);
   });
-}());
+}
+
+syncCourseAccess();

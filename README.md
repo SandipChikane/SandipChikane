@@ -1,25 +1,56 @@
 # Gradflow portal
 
-A responsive, frontend-only course portal concept for final-year students and Training & Placement Officers.
-
-## Included
-
-- Course discovery with path filters and payment-gated course access
-- Portfolio and student-success storytelling
-- Free, privacy-first TPO workspace with college-scoped enrollment and student progress
-- FAQ, mobile navigation, accessible dialogs, and responsive layouts
-- Student enrollment stored in `localStorage` (`gradflowEnrollments`), with no payment details in TPO views
+A responsive course portal for final-year students and Training & Placement Officers. Course access unlocks only after Razorpay verifies payment. Enrollment is stored in Supabase. TPO views never include payment ids, amounts, or card details.
 
 ## Run locally
 
-Open `index.html` directly, or serve this folder with any static web server. No build step is required.
+```bash
+cp .env.example .env.local
+# add your Supabase and Razorpay values
+npm start
+```
 
-## Production integrations still needed
+Then open http://127.0.0.1:4173
 
-The current forms are polished prototype interactions. To process actual purchases, enrollment, and TPO reporting, connect:
+Without keys, the site still renders. Checkout stays locked and the APIs return `503` instead of faking a successful payment.
 
-1. Authentication and student/TPO roles
-2. A payment provider such as Razorpay or Stripe
-3. A database for courses, cohorts, lessons, projects and enrolments
-4. An admin upload area for your lesson and project content
-5. TPO reporting with consent-aware, aggregate student progress data
+## Connect Supabase
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor** and run `supabase/schema.sql`.
+3. Copy these values from **Project Settings → API**:
+   - Project URL → `SUPABASE_URL`
+   - `service_role` secret → `SUPABASE_SERVICE_ROLE_KEY` (server only)
+4. The `anon` key is optional. The app talks to Supabase only from the server.
+
+## Connect Razorpay
+
+1. Create an account at [razorpay.com](https://razorpay.com).
+2. Open **Account & Settings → API Keys**.
+3. Use test keys (`rzp_test_…`) while developing.
+4. Copy:
+   - Key ID → `RAZORPAY_KEY_ID`
+   - Key Secret → `RAZORPAY_KEY_SECRET`
+5. Optional webhook: point it at `/api/razorpay-webhook` for `payment.captured` and set `RAZORPAY_WEBHOOK_SECRET`.
+
+## What the server does
+
+| Route | Role |
+| --- | --- |
+| `POST /api/create-order` | Creates a Razorpay order for a known course |
+| `POST /api/verify-payment` | Checks the checkout signature, then upserts enrollment |
+| `GET /api/enrollments` | Returns that student’s paid courses, without payment ids |
+| `GET /api/tpo-enrollments` | Returns a college cohort for the TPO workspace, without payment ids |
+| `GET /api/public-config` | Says whether keys are present. Never returns secrets |
+
+The browser caches verified enrollments in `localStorage` so a reload still works if the API is briefly down. It does not mark a course paid until Razorpay verification succeeds.
+
+## Deploy on Vercel
+
+Add the same environment variables in the Vercel project, then deploy this folder. The `/api` routes become Vercel Functions.
+
+## Tests
+
+```bash
+npm test
+```

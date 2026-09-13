@@ -1,5 +1,6 @@
 const ENROLLMENT_KEY = 'gradflowEnrollments';
 const STUDENT_EMAIL_KEY = 'gradflowStudentEmail';
+const STUDENT_COLLEGE_KEY = 'gradflowStudentCollege';
 const GUEST_KEY = 'guest';
 
 const COURSE_CATALOG = [
@@ -160,6 +161,16 @@ function setStudentEmail(email) {
   return next;
 }
 
+function getStudentCollege() {
+  return (localStorage.getItem(STUDENT_COLLEGE_KEY) || '').trim();
+}
+
+function setStudentCollege(college) {
+  const next = (college || '').trim();
+  if (next) localStorage.setItem(STUDENT_COLLEGE_KEY, next);
+  return getStudentCollege();
+}
+
 function studentEnrollments() {
   return loadAllEnrollments()[studentKey()] || {};
 }
@@ -177,20 +188,85 @@ function isEnrolled(courseId) {
   return Boolean(record && record.paid);
 }
 
-function enroll(courseId) {
-  const course = courseById(courseId);
-  if (!course) return null;
+function cacheEnrollment(record) {
+  if (!record || !record.paid || !record.courseId) return null;
+  const course = courseById(record.courseId);
   const all = loadAllEnrollments();
   const key = studentKey();
   all[key] = all[key] || {};
-  all[key][courseId] = {
+  all[key][record.courseId] = {
     paid: true,
-    courseId,
-    courseName: course.name,
-    enrolledAt: new Date().toISOString(),
+    courseId: record.courseId,
+    courseName: record.courseName || course?.name || record.courseId,
+    enrolledAt: record.enrolledAt || new Date().toISOString(),
   };
   saveAllEnrollments(all);
-  return all[key][courseId];
+  return all[key][record.courseId];
+}
+
+async function apiRequest(url, options) {
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+  return { ok: response.ok, status: response.status, data };
+}
+
+async function publicConfig() {
+  try {
+    const result = await apiRequest('/api/public-config');
+    return result.data;
+  } catch {
+    return { paymentsReady: false, supabaseReady: false };
+  }
+}
+
+async function refreshFromServer() {
+  const email = getStudentEmail();
+  if (!email) return { ok: false, configured: false, enrollments: [] };
+  try {
+    const result = await apiRequest(`/api/enrollments?email=${encodeURIComponent(email)}`);
+    if (result.status === 503) return { ok: false, configured: false, enrollments: [] };
+    if (!result.ok) return { ok: false, configured: true, enrollments: [] };
+    const rows = result.data.enrollments || [];
+    rows.forEach((row) => cacheEnrollment(row));
+    return { ok: true, configured: true, enrollments: rows };
+  } catch {
+    return { ok: false, configured: false, enrollments: [] };
+  }
+}
+
+async function createOrder({ courseId, email, college }) {
+  return apiRequest('/api/create-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ courseId, email, college }),
+  });
+}
+
+async function verifyPayment(payload) {
+  return apiRequest('/api/verify-payment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function tpoEnrollments(college) {
+  return apiRequest(`/api/tpo-enrollments?college=${encodeURIComponent(college)}`);
+}
+
+function loadRazorpay() {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve(window.Razorpay);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(window.Razorpay);
+    script.onerror = () => reject(new Error('Could not load Razorpay Checkout.'));
+    document.head.appendChild(script);
+  });
 }
 
 function formatPrice(amount) {
@@ -205,11 +281,19 @@ window.GradflowEnrollment = {
   catalog: COURSE_CATALOG,
   getStudentEmail,
   setStudentEmail,
+  getStudentCollege,
+  setStudentCollege,
   studentEnrollments,
   courseById,
   courseByName,
   isEnrolled,
-  enroll,
+  cacheEnrollment,
+  publicConfig,
+  refreshFromServer,
+  createOrder,
+  verifyPayment,
+  tpoEnrollments,
+  loadRazorpay,
   formatPrice,
   courseUrl,
 };
