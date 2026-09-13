@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import './lib/load-env.mjs';
 import { adminHandlers, dispatchAdmin } from './lib/admin-http.mjs';
 import { createHandlers } from './lib/handlers.mjs';
-import { readRawBody, sendJson, sendResult } from './lib/http.mjs';
+import { readRawBody, sendJson, sendMedia, sendResult } from './lib/http.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 4173;
@@ -48,6 +48,14 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname === '/api/catalog-course') {
       sendResult(res, await adminHandlers.publicCourse(Object.fromEntries(url.searchParams.entries()), req));
+      return;
+    }
+    if (url.pathname === '/api/lesson-media') {
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        sendJson(res, 405, { error: 'Method not allowed' });
+        return;
+      }
+      await sendMedia(res, await adminHandlers.lessonMedia(req, Object.fromEntries(url.searchParams.entries())));
       return;
     }
     if (url.pathname.startsWith('/api/admin')) {

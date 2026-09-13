@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { createAdminHandlers, adminEnrollment } from '../lib/admin-handlers.mjs';
 import { emailsMatch, passwordsMatch, signSession, verifyAdminSecret } from '../lib/admin-auth.mjs';
 import { hashPassword } from '../lib/access-auth.mjs';
-import { seedPayloadFromCatalog, toPublicCourse, unwrapSetting } from '../lib/cms.mjs';
+import { seedPayloadFromCatalog, toAdminCourse, toPublicCourse, toStudentCourse, unwrapSetting } from '../lib/cms.mjs';
 import { publicEnrollment } from '../lib/supabase.mjs';
 import { SEED_COURSES } from '../lib/seed-courses.mjs';
 
@@ -59,8 +59,8 @@ describe('admin auth', () => {
 });
 
 describe('cms mapping', () => {
-  it('exposes lesson media on the public course payload', () => {
-    const course = toPublicCourse({
+  it('keeps lesson media off the public course payload', () => {
+    const row = {
       id: 'demo-lab',
       name: 'Demo Lab',
       category: 'tech',
@@ -72,7 +72,9 @@ describe('cms mapping', () => {
       status: 'published',
       featured: false,
       sort_order: 1,
-    }, [{ id: 'm1', number: '01', title: 'Start', duration: '1 week' }], [{
+    };
+    const modules = [{ id: 'm1', number: '01', title: 'Start', duration: '1 week' }];
+    const lessons = [{
       id: 'l1',
       module_id: 'm1',
       number: '01',
@@ -82,10 +84,20 @@ describe('cms mapping', () => {
       copy: 'Watch this first.',
       video_url: 'https://example.com/lesson.mp4',
       image_url: 'https://example.com/still.jpg',
+      resource_url: 'https://example.com/brief.pdf',
+      resource_label: 'Brief',
       is_current: true,
-    }]);
-    assert.equal(course.lesson.videoUrl, 'https://example.com/lesson.mp4');
-    assert.equal(course.modules[0].title, 'Start');
+    }];
+    const publicCourse = toPublicCourse(row, modules, lessons);
+    const studentCourse = toStudentCourse(row, modules, lessons);
+    const adminCourse = toAdminCourse(row, modules, lessons);
+    assert.equal(publicCourse.lesson.videoUrl, '');
+    assert.equal(publicCourse.lessons[0].resourceUrl, '');
+    assert.equal(publicCourse.modules[0].title, 'Start');
+    assert.equal(studentCourse.lesson.videoUrl, '/api/lesson-media?course=demo-lab&kind=video&lesson=l1');
+    assert.match(studentCourse.lesson.resourceUrl, /kind=resource/);
+    assert.equal(JSON.stringify(studentCourse).includes('example.com/lesson.mp4'), false);
+    assert.equal(adminCourse.lesson.videoUrl, 'https://example.com/lesson.mp4');
   });
 
   it('seeds every built-in course as published', () => {

@@ -45,15 +45,8 @@ function renderUnlocked() {
   document.getElementById('lessonTitle').textContent = lesson.title || course.name;
   document.getElementById('lessonCopy').textContent = lesson.copy || course.blurb || '';
   document.getElementById('lessonTime').textContent = `${lesson.minutes || 0} min · ${(course.tools || []).join(' · ')}`;
-  fillMedia('lessonMedia', lesson.videoUrl || course.promoVideoUrl, lesson.imageUrl || course.coverImageUrl);
-  const resource = document.getElementById('lessonResource');
-  if (lesson.resourceUrl) {
-    resource.hidden = false;
-    resource.innerHTML = `<a class="arrow-link" href="${lesson.resourceUrl}" target="_blank" rel="noreferrer">${lesson.resourceLabel || 'Download resource'} <span>↗</span></a>`;
-  } else {
-    resource.hidden = true;
-    resource.replaceChildren();
-  }
+  fillMedia('lessonMedia', lesson.videoUrl, lesson.imageUrl);
+  renderLessonResource(lesson);
   lockedState.hidden = true;
   unlockedState.hidden = false;
   missingState.hidden = true;
@@ -89,9 +82,85 @@ function renderLocked(config = {}) {
 
 async function finishEnrollment(record) {
   window.GradflowEnrollment.cacheEnrollment(record);
+  await hydrateCourse();
   renderUnlocked();
   showToast('Payment verified.', `${course.name} is unlocked. TPOs never see this payment.`);
   unlockedState.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function protectMedia(element) {
+  if (!element) return element;
+  element.controlsList = 'nodownload noremoteplayback';
+  element.disablePictureInPicture = true;
+  element.setAttribute('controlsList', 'nodownload noremoteplayback');
+  element.setAttribute('disablePictureInPicture', '');
+  element.setAttribute('controlslist', 'nodownload noremoteplayback');
+  element.draggable = false;
+  element.addEventListener('contextmenu', (event) => event.preventDefault());
+  element.addEventListener('dragstart', (event) => event.preventDefault());
+  return element;
+}
+
+function renderLessonResource(lesson = {}) {
+  const resource = document.getElementById('lessonResource');
+  if (!resource) return;
+  resource.replaceChildren();
+  if (lesson.resourceUrl) {
+    const card = document.createElement('div');
+    card.className = 'resource-card';
+    const button = document.createElement('button');
+    button.className = 'arrow-link';
+    button.type = 'button';
+    button.textContent = `${lesson.resourceLabel || 'Open resource'} →`;
+    const frame = document.createElement('div');
+    frame.className = 'resource-frame';
+    frame.hidden = true;
+    button.addEventListener('click', () => openProtectedResource(frame, lesson.resourceUrl));
+    const note = document.createElement('p');
+    note.className = 'resource-note';
+    note.textContent = 'View in the browser. Downloads are turned off.';
+    card.append(button, frame, note);
+    resource.appendChild(card);
+    resource.hidden = false;
+    return;
+  }
+  if (lesson.resourceBlocked) {
+    const note = document.createElement('p');
+    note.className = 'resource-note';
+    note.textContent = 'This file stays in the lesson player and cannot be downloaded.';
+    resource.appendChild(note);
+    resource.hidden = false;
+    return;
+  }
+  resource.hidden = true;
+}
+
+function openProtectedResource(frame, url) {
+  frame.hidden = false;
+  frame.replaceChildren();
+  const kind = new URL(url, window.location.origin).searchParams.get('kind');
+  if (kind === 'image' || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(url)) {
+    const image = protectMedia(document.createElement('img'));
+    image.src = url;
+    image.alt = 'Lesson resource';
+    frame.appendChild(image);
+    return;
+  }
+  if (kind === 'video' || /\.(mp4|webm|m4v|mov)(\?|$)/i.test(url)) {
+    const video = protectMedia(document.createElement('video'));
+    video.src = url;
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = 'metadata';
+    frame.appendChild(video);
+    return;
+  }
+  const iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.title = 'Lesson resource';
+  iframe.setAttribute('referrerpolicy', 'no-referrer');
+  iframe.addEventListener('contextmenu', (event) => event.preventDefault());
+  frame.appendChild(iframe);
 }
 
 function fillMedia(id, videoUrl, imageUrl) {
@@ -99,16 +168,17 @@ function fillMedia(id, videoUrl, imageUrl) {
   if (!node) return;
   node.replaceChildren();
   if (videoUrl) {
-    const video = document.createElement('video');
+    const video = protectMedia(document.createElement('video'));
     video.src = videoUrl;
     video.controls = true;
     video.playsInline = true;
+    video.preload = 'metadata';
     node.appendChild(video);
     node.hidden = false;
     return;
   }
   if (imageUrl) {
-    const image = document.createElement('img');
+    const image = protectMedia(document.createElement('img'));
     image.src = imageUrl;
     image.alt = '';
     node.appendChild(image);
@@ -118,13 +188,13 @@ function fillMedia(id, videoUrl, imageUrl) {
   node.hidden = true;
 }
 
-async function loadPreviewCourse(id) {
-  const response = await fetch(`/api/catalog-course?id=${encodeURIComponent(id)}&preview=1`, {
-    credentials: 'same-origin',
+async function hydrateCourse() {
+  const id = params.get('course') || course?.id;
+  if (!id) return;
+  const detail = await window.GradflowEnrollment.loadStudentCourse(id, {
+    preview: params.get('preview') === '1',
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.course) return null;
-  return { ...data.course, preview: Boolean(data.preview) };
+  if (detail) course = detail;
 }
 
 async function boot() {
@@ -132,8 +202,7 @@ async function boot() {
   course = window.GradflowEnrollment.courseById(params.get('course'))
     || window.GradflowEnrollment.courseByName(params.get('course'));
   if (params.get('preview') === '1' && params.get('course')) {
-    const preview = await loadPreviewCourse(params.get('course'));
-    if (preview) course = preview;
+    await hydrateCourse();
   }
   if (!course) {
     missingState.hidden = false;
@@ -153,6 +222,7 @@ async function boot() {
     return;
   }
   if (window.GradflowEnrollment.isEnrolled(course.id)) {
+    await hydrateCourse();
     renderUnlocked();
     return;
   }
@@ -254,6 +324,7 @@ document.getElementById('signInForm')?.addEventListener('submit', async (event) 
       throw new Error(result.data.error || 'Could not sign in.');
     }
     if (window.GradflowEnrollment.isEnrolled(course.id)) {
+      await hydrateCourse();
       renderUnlocked();
       showToast('Signed in.', `${course.name} is unlocked on this device.`);
       document.getElementById('unlockedState').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -269,6 +340,12 @@ document.getElementById('signInForm')?.addEventListener('submit', async (event) 
 
 document.getElementById('startContent')?.addEventListener('click', () => {
   document.getElementById('currentLesson').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+document.addEventListener('contextmenu', (event) => {
+  if (event.target.closest('.course-media, .resource-frame, .current-lesson video, .current-lesson img')) {
+    event.preventDefault();
+  }
 });
 
 boot();

@@ -237,6 +237,15 @@ function courseUrl(courseId) {
   return `course.html?course=${encodeURIComponent(courseId)}`;
 }
 
+async function loadStudentCourse(id, { preview = false } = {}) {
+  if (!id) return null;
+  const query = new URLSearchParams({ id });
+  if (preview) query.set('preview', '1');
+  const result = await apiRequest(`/api/catalog-course?${query}`);
+  if (!result.ok || !result.data.course) return null;
+  return { ...result.data.course, preview: Boolean(result.data.preview) };
+}
+
 window.GradflowEnrollment = {
   catalog: COURSE_CATALOG,
   getStudentEmail,
@@ -265,4 +274,5 @@ window.GradflowEnrollment = {
   loadRazorpay,
   formatPrice,
   courseUrl,
+  loadStudentCourse,
 };
