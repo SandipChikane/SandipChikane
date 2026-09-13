@@ -64,7 +64,7 @@ function renderLocked(config = {}) {
     payNote.textContent = `${config.mode === 'test' ? 'Razorpay test mode. ' : ''}Checkout opens with Razorpay. Card details stay with Razorpay. TPOs never see payment data.`;
     setPayBusy(false, `Pay ${window.GradflowEnrollment.formatPrice(course.price)} and enroll`);
   } else {
-    payNote.textContent = 'Supabase and Razorpay keys are not connected yet. The course stays locked until payment can be verified.';
+    payNote.textContent = 'Supabase and Razorpay keys are not connected yet. The course stays locked until payment can be verified. TPOs never see payment data.';
     setPayBusy(true, 'Payments not connected yet');
   }
   lockedState.hidden = false;
