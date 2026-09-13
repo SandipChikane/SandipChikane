@@ -78,13 +78,14 @@ describe('student media protection', () => {
         assert.equal(options.headers?.Range, undefined);
         return new Response(bytes, {
           status: 200,
-          headers: { 'Content-Type': 'video/mp4', 'Content-Length': String(bytes.length) },
+          headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(bytes.length) },
         });
       },
     });
     assert.equal(result.status, 200);
     assert.equal(result.headers['Content-Disposition'], 'inline');
     assert.equal(result.headers['Cache-Control'], 'private, no-store');
+    assert.equal(result.headers['Content-Type'], 'video/mp4');
     assert.equal(result.body, undefined);
     const streamed = Buffer.from(await new Response(result.upstream).arrayBuffer());
     assert.equal(streamed.toString(), 'fake-mp4');
