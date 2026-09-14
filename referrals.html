@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08231e" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Referrals — Gradflow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="course.css" />
+  </head>
+  <body class="dashboard-body">
+    <aside class="dash-sidebar">
+      <a href="index.html" class="brand dash-brand" aria-label="Gradflow home"><span class="brand-mark"><i></i><i></i><i></i></span><span>gradflow<span class="period">.</span></span></a>
+      <nav class="dash-nav" aria-label="Student dashboard navigation">
+        <a href="dashboard.html#overview"><span>▦</span> Overview</a>
+        <a href="dashboard.html#learning"><span>▤</span> My learning</a>
+        <a href="dashboard.html#projects"><span>◇</span> Projects</a>
+        <a href="dashboard.html#career"><span>↗</span> Career space</a>
+        <a class="active" href="/referrals.html"><span>₹</span> Referrals</a>
+      </nav>
+      <div class="side-progress">
+        <span class="side-ring"><b>78</b><small>%</small></span>
+        <div><small>CAREER READINESS</small><strong>You're getting there.</strong></div>
+      </div>
+      <div class="side-bottom"><button id="helpButton"><span>?</span> Need a hand?</button><a href="index.html"><span>←</span> Back to Gradflow</a></div>
+    </aside>
+
+    <main class="dash-main" id="referrals">
+      <header class="dash-header">
+        <button class="dash-menu" id="dashMenu" aria-label="Open navigation"><span></span><span></span></button>
+        <div class="search-box"><span>⌕</span><input aria-label="Search your learning" placeholder="Search lessons, projects &amp; resources" /></div>
+        <div class="dash-actions"><button class="notification" aria-label="Notifications">♢<i></i></button><div class="student-chip"><span class="student-avatar" id="studentAvatar">AK</span><span class="student-name" id="studentChipName">Student</span><button id="studentLogout" type="button">Sign out</button></div></div>
+      </header>
+
+      <div class="dash-content">
+        <section class="welcome-row">
+          <div>
+            <p class="dashboard-eyebrow"><span>✦</span> REFERRALS</p>
+            <h1>Share your <em>link.</em></h1>
+            <p class="welcome-copy" id="referralHeadline">Referral earnings stay on this page, separate from your courses.</p>
+          </div>
+        </section>
+
+        <section class="course-access-block" id="studentAuthBlock">
+          <form class="dash-auth-card" id="dashSignInForm">
+            <p class="mini-eyebrow">STUDENT SIGN IN</p>
+            <h2>Already paid? <em>Open referrals.</em></h2>
+            <p class="dash-locked-note">Use the email and password you set when you enrolled. Set or change a password from Overview if you need one.</p>
+            <label>College email<input id="dashEmail" type="email" required autocomplete="username" placeholder="you@college.edu" /></label>
+            <label>Password<input id="dashPassword" type="password" required autocomplete="current-password" placeholder="Your course password" /></label>
+            <button class="button button-dark" type="submit">Sign in</button>
+          </form>
+        </section>
+
+        <section class="course-access-block" id="referralRoot">
+          <p class="dash-locked-note" id="referralEmpty">Sign in to see your referral link and earnings.</p>
+        </section>
+      </div>
+    </main>
+
+    <div class="dashboard-modal" id="dashboardModal" aria-hidden="true"><section role="dialog" aria-modal="true"><button id="dashboardModalClose" aria-label="Close">×</button><div id="dashboardModalContent"></div></section></div>
+    <div class="toast dash-toast" id="dashToast" role="status" aria-live="polite"><span>✓</span><div><strong>Referral page ready.</strong><small>Your referral details stay off the main dashboard.</small></div></div>
+    <script src="enrollment.js"></script>
+    <script src="referrals.js"></script>
+  </body>
+</html>
