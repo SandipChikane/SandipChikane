@@ -12,6 +12,7 @@ describe('landing CMS', () => {
   it('keeps the current homepage copy as the default', () => {
     const landing = defaultLanding();
     assert.equal(landing.heroTitleEm, 'proof');
+    assert.equal(landing.heroTitleBefore, 'Graduate with\n');
     assert.match(landing.heroLede, /Tool-first programs/);
     assert.equal(landing.faq1Question, 'Who are Gradflow courses for?');
     assert.deepEqual(landing.marqueeItems, ['VIT', 'MIT', 'SRM', 'Manipal', 'Amity', 'Christ']);
@@ -32,6 +33,11 @@ describe('landing CMS', () => {
   it('parses jsonb strings from site settings', () => {
     const landing = parseLanding(JSON.stringify({ heroCta: 'Browse paths' }));
     assert.equal(landing.heroCta, 'Browse paths');
+  });
+
+  it('keeps designed line breaks in heading fields', () => {
+    const landing = parseLanding({ heroTitleBefore: 'Graduate with\n' });
+    assert.equal(landing.heroTitleBefore, 'Graduate with\n');
   });
 
   it('returns landing copy from public-config', async () => {
