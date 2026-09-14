@@ -158,9 +158,19 @@
   -webkit-user-drag: none;
 }
 
-.course-media video::-webkit-media-controls-download-button,
-.resource-frame video::-webkit-media-controls-download-button {
+.course-media:not(.downloads-on) video::-webkit-media-controls-download-button,
+.resource-frame:not(.downloads-on) video::-webkit-media-controls-download-button {
   display: none !important;
+}
+
+.resource-card .arrow-link + .arrow-link {
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.course-media .arrow-link {
+  display: inline-block;
+  margin-top: 10px;
 }
 
 .resource-card {

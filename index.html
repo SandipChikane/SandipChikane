@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#081b18" />
-    <title>Gradflow — From campus to career</title>
+    <title id="landingPageTitle">Gradflow — From campus to career</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
@@ -40,18 +40,18 @@
     <main id="top">
       <section class="hero section-wrap">
         <div class="hero-copy reveal">
-          <div class="eyebrow"><span class="spark">✦</span> Career school for the real world</div>
-          <h1>Graduate with<br /><em>proof</em>, not just<br />a degree.</h1>
-          <p class="hero-lede">Tool-first programs, guided portfolio projects and a clear path from final semester to your first great role.</p>
+          <div class="eyebrow"><span class="spark">✦</span> <span data-landing="heroEyebrow">Career school for the real world</span></div>
+          <h1 id="landingHeroTitle">Graduate with<br /><em>proof</em>, not just<br />a degree.</h1>
+          <p class="hero-lede" data-landing="heroLede">Tool-first programs, guided portfolio projects and a clear path from final semester to your first great role.</p>
           <div class="hero-actions">
-            <button class="button button-lime" data-scroll="#courses">Find your course <span>→</span></button>
-            <button class="video-button" data-open-modal="demo"><span class="play-icon">▶</span> See how Gradflow works</button>
+            <button class="button button-lime" data-scroll="#courses"><span data-landing="heroCta">Find your course</span> <span>→</span></button>
+            <button class="video-button" data-open-modal="demo"><span class="play-icon">▶</span> <span data-landing="heroVideoCta">See how Gradflow works</span></button>
           </div>
           <div class="proof-row">
             <div class="avatars" aria-label="Recent Gradflow students">
               <span class="avatar av-1">S</span><span class="avatar av-2">K</span><span class="avatar av-3">A</span><span class="avatar av-4">R</span>
             </div>
-            <p><strong>4,200+ final-year students</strong><br />are building their next move</p>
+            <p><strong data-landing="heroProofStat">4,200+ final-year students</strong><br /><span data-landing="heroProofSub">are building their next move</span></p>
           </div>
         </div>
 
@@ -71,26 +71,26 @@
       </section>
 
       <section class="trust-marquee">
-        <p>Built for students from campuses across India</p>
-        <div class="marquee-track"><span>VIT</span><i></i><span>MIT</span><i></i><span>SRM</span><i></i><span>Manipal</span><i></i><span>Amity</span><i></i><span>Christ</span><i></i><span>VIT</span><i></i><span>MIT</span><i></i><span>SRM</span><i></i></div>
+        <p data-landing="marqueeLabel">Built for students from campuses across India</p>
+        <div class="marquee-track" id="landingMarquee"><span>VIT</span><i></i><span>MIT</span><i></i><span>SRM</span><i></i><span>Manipal</span><i></i><span>Amity</span><i></i><span>Christ</span><i></i><span>VIT</span><i></i><span>MIT</span><i></i><span>SRM</span><i></i></div>
       </section>
 
       <section class="intro section-wrap" id="how-it-works">
-        <div class="section-label"><span>01</span> THE GRADFLOW WAY</div>
+        <div class="section-label"><span>01</span> <span data-landing="introLabel">THE GRADFLOW WAY</span></div>
         <div class="intro-grid">
-          <h2>Less watching.<br />More <em>doing.</em></h2>
-          <div class="intro-copy"><p>The gap between college and a role is rarely talent. It’s knowing which tools matter, getting feedback while you build, and having work you can confidently show.</p><a href="#courses" class="arrow-link">Explore the learning experience <span>↘</span></a></div>
+          <h2 id="landingIntroTitle">Less watching.<br />More <em>doing.</em></h2>
+          <div class="intro-copy"><p data-landing="introCopy">The gap between college and a role is rarely talent. It’s knowing which tools matter, getting feedback while you build, and having work you can confidently show.</p><a href="#courses" class="arrow-link"><span data-landing="introLink">Explore the learning experience</span> <span>↘</span></a></div>
         </div>
         <div class="principles-grid">
-          <article><span class="principle-number">01</span><div class="principle-icon">⌘</div><h3>Tools that teams use</h3><p>Learn current, practical workflows—not outdated theory.</p></article>
-          <article><span class="principle-number">02</span><div class="principle-icon">✣</div><h3>Projects with a purpose</h3><p>Every project becomes a strong, explainable portfolio piece.</p></article>
-          <article><span class="principle-number">03</span><div class="principle-icon">↗</div><h3>Career momentum</h3><p>Get structured support from first lesson to first interview.</p></article>
+          <article><span class="principle-number">01</span><div class="principle-icon">⌘</div><h3 data-landing="principle1Title">Tools that teams use</h3><p data-landing="principle1Copy">Learn current, practical workflows—not outdated theory.</p></article>
+          <article><span class="principle-number">02</span><div class="principle-icon">✣</div><h3 data-landing="principle2Title">Projects with a purpose</h3><p data-landing="principle2Copy">Every project becomes a strong, explainable portfolio piece.</p></article>
+          <article><span class="principle-number">03</span><div class="principle-icon">↗</div><h3 data-landing="principle3Title">Career momentum</h3><p data-landing="principle3Copy">Get structured support from first lesson to first interview.</p></article>
         </div>
       </section>
 
       <section class="course-section" id="courses">
         <div class="section-wrap">
-          <div class="course-heading"><div><div class="section-label light"><span>02</span> PICK YOUR PATH</div><h2>Build for the role<br />you <em>want.</em></h2></div><p>Focused learning paths shaped around the work companies are hiring for right now.</p></div>
+          <div class="course-heading"><div><div class="section-label light"><span>02</span> <span data-landing="coursesLabel">PICK YOUR PATH</span></div><h2 id="landingCoursesTitle">Build for the role<br />you <em>want.</em></h2></div><p data-landing="coursesIntro">Focused learning paths shaped around the work companies are hiring for right now.</p></div>
           <div class="course-tabs" role="tablist" aria-label="Course filters">
             <button class="active" data-filter="all" role="tab">All paths <span id="courseCount">00</span></button>
             <button data-filter="analytics" role="tab">Analytics</button><button data-filter="tech" role="tab">Technology</button><button data-filter="design" role="tab">Design</button>
@@ -103,36 +103,36 @@
       </section>
 
       <section class="project-showcase section-wrap">
-        <div class="section-label"><span>03</span> NOT ANOTHER CERTIFICATE</div>
-        <div class="showcase-header"><h2>Make work<br />worth <em>showing.</em></h2><p>You’ll finish with a portfolio that gives recruiters a reason to pause—and a story you’re proud to tell.</p></div>
+        <div class="section-label"><span>03</span> <span data-landing="showcaseLabel">NOT ANOTHER CERTIFICATE</span></div>
+        <div class="showcase-header"><h2 id="landingShowcaseTitle">Make work<br />worth <em>showing.</em></h2><p data-landing="showcaseIntro">You’ll finish with a portfolio that gives recruiters a reason to pause—and a story you’re proud to tell.</p></div>
         <div class="project-layout">
           <div class="project-browser">
             <div class="browser-top"><span></span><span></span><span></span><div>portfolio.gradflow.in/riya</div></div>
             <div class="browser-content"><div class="browser-nav"><strong>Riya<span>.</span></strong><small>PRODUCT THINKER</small><button>Get in touch ↗</button></div><div class="browser-hero"><p>Hi, I’m Riya. I turn complex problems into <em>simple digital experiences.</em></p><div class="browser-project-card"><span>01 · CASE STUDY</span><strong>Making student finances less intimidating.</strong><div class="card-art"><i></i><i></i><i></i></div></div></div></div>
           </div>
-          <aside class="project-notes"><div class="note-rule"></div><p class="annotation">A living portfolio, created one project at a time.</p><div class="project-stats"><div><strong>06</strong><span>portfolio projects</span></div><div><strong>4.8<span>/5</span></strong><span>average mentor feedback</span></div></div><button class="button button-outline" data-open-modal="demo">Preview a student portfolio <span>↗</span></button></aside>
+          <aside class="project-notes"><div class="note-rule"></div><p class="annotation" data-landing="showcaseNote">A living portfolio, created one project at a time.</p><div class="project-stats"><div><strong data-landing="showcaseStat1Value">06</strong><span data-landing="showcaseStat1Label">portfolio projects</span></div><div><strong data-landing="showcaseStat2Value">4.8<span>/5</span></strong><span data-landing="showcaseStat2Label">average mentor feedback</span></div></div><button class="button button-outline" data-open-modal="demo"><span data-landing="showcaseCta">Preview a student portfolio</span> <span>↗</span></button></aside>
         </div>
       </section>
 
       <section class="outcomes-section" id="outcomes">
         <div class="section-wrap outcome-grid">
-          <div><div class="section-label light"><span>04</span> OUTCOMES THAT COUNT</div><h2>Ready when<br />opportunity<br /><em>knocks.</em></h2></div>
-          <div class="outcome-content"><p>Gradflow students leave with practical confidence: real work, a clearer career direction, and stories that make an interview feel less scary.</p><div class="outcome-numbers"><div><strong>86<span>%</span></strong><small>say they feel career-ready<br />after their pathway</small></div><div><strong>4.8<span>/5</span></strong><small>average project review<br />from industry mentors</small></div><div><strong>3×</strong><small>more likely to finish<br />a portfolio project</small></div></div><a href="#stories" class="arrow-link light-link">Meet the graduates <span>↗</span></a></div>
+          <div><div class="section-label light"><span>04</span> <span data-landing="outcomesLabel">OUTCOMES THAT COUNT</span></div><h2 id="landingOutcomesTitle">Ready when<br />opportunity<br /><em>knocks.</em></h2></div>
+          <div class="outcome-content"><p data-landing="outcomesCopy">Gradflow students leave with practical confidence: real work, a clearer career direction, and stories that make an interview feel less scary.</p><div class="outcome-numbers"><div><strong data-landing="outcome1Value">86<span>%</span></strong><small data-landing="outcome1Label">say they feel career-ready<br />after their pathway</small></div><div><strong data-landing="outcome2Value">4.8<span>/5</span></strong><small data-landing="outcome2Label">average project review<br />from industry mentors</small></div><div><strong data-landing="outcome3Value">3×</strong><small data-landing="outcome3Label">more likely to finish<br />a portfolio project</small></div></div><a href="#stories" class="arrow-link light-link"><span data-landing="outcomesLink">Meet the graduates</span> <span>↗</span></a></div>
         </div>
       </section>
 
       <section class="stories-section section-wrap" id="stories">
-        <div class="stories-heading"><div><div class="section-label"><span>05</span> THEIR NEXT CHAPTER</div><h2>They built the<br /><em>bridge.</em></h2></div><div class="slider-controls"><button id="prevStory" aria-label="Previous story">←</button><button id="nextStory" aria-label="Next story">→</button></div></div>
+        <div class="stories-heading"><div><div class="section-label"><span>05</span> <span data-landing="storiesLabel">THEIR NEXT CHAPTER</span></div><h2 id="landingStoriesTitle">They built the<br /><em>bridge.</em></h2></div><div class="slider-controls"><button id="prevStory" aria-label="Previous story">←</button><button id="nextStory" aria-label="Next story">→</button></div></div>
         <div class="stories-track" id="storiesTrack">
-          <article class="story-card story-main"><div class="quote-mark">“</div><blockquote>Gradflow made me stop saying ‘I only know the basics.’ I had actual work to talk about in every interview.</blockquote><div class="story-person"><span class="person-photo person-rhea">RG</span><div><strong>Rhea Gupta</strong><small>Junior Data Analyst, InMobi</small></div><span class="story-course">DATA ANALYTICS</span></div></article>
-          <article class="story-card"><div class="story-color teal"></div><blockquote>My portfolio became the thing that got me replies. I had something specific to show, not just a list of skills.</blockquote><div class="story-person"><span class="person-photo person-karthik">KR</span><div><strong>Karthik Rao</strong><small>Frontend Developer, Mintlify</small></div></div></article>
-          <article class="story-card"><div class="story-color coral"></div><blockquote>I learned how to explain the ‘why’ behind my designs. That changed every conversation I had with recruiters.</blockquote><div class="story-person"><span class="person-photo person-ananya">AN</span><div><strong>Ananya Nair</strong><small>UX Associate, Jio</small></div></div></article>
+          <article class="story-card story-main"><div class="quote-mark">“</div><blockquote data-landing="story1Quote">Gradflow made me stop saying ‘I only know the basics.’ I had actual work to talk about in every interview.</blockquote><div class="story-person"><span class="person-photo person-rhea">RG</span><div><strong data-landing="story1Name">Rhea Gupta</strong><small data-landing="story1Role">Junior Data Analyst, InMobi</small></div><span class="story-course" data-landing="story1Course">DATA ANALYTICS</span></div></article>
+          <article class="story-card"><div class="story-color teal"></div><blockquote data-landing="story2Quote">My portfolio became the thing that got me replies. I had something specific to show, not just a list of skills.</blockquote><div class="story-person"><span class="person-photo person-karthik">KR</span><div><strong data-landing="story2Name">Karthik Rao</strong><small data-landing="story2Role">Frontend Developer, Mintlify</small></div></div></article>
+          <article class="story-card"><div class="story-color coral"></div><blockquote data-landing="story3Quote">I learned how to explain the ‘why’ behind my designs. That changed every conversation I had with recruiters.</blockquote><div class="story-person"><span class="person-photo person-ananya">AN</span><div><strong data-landing="story3Name">Ananya Nair</strong><small data-landing="story3Role">UX Associate, Jio</small></div></div></article>
         </div>
       </section>
 
       <section class="tpo-section" id="tpo">
         <div class="section-wrap tpo-grid">
-          <div class="tpo-copy"><div class="eyebrow"><span class="spark">✦</span> Built alongside your placement cell</div><h2>See your cohort<br />move <em>forward.</em></h2><p>Give students a practical edge, while your TPO team gets a clear, privacy-first view of engagement, project progress and career readiness.</p><ul class="check-list"><li><span>✓</span> Free TPO workspace, always</li><li><span>✓</span> No student payment data, ever</li><li><span>✓</span> Monthly progress summaries</li></ul><button class="button button-lime" data-open-modal="tpo">Get your TPO workspace <span>→</span></button></div>
+          <div class="tpo-copy"><div class="eyebrow"><span class="spark">✦</span> <span data-landing="tpoEyebrow">Built alongside your placement cell</span></div><h2 id="landingTpoTitle">See your cohort<br />move <em>forward.</em></h2><p data-landing="tpoCopy">Give students a practical edge, while your TPO team gets a clear, privacy-first view of engagement, project progress and career readiness.</p><ul class="check-list"><li><span>✓</span> <span data-landing="tpoItem1">Free TPO workspace, always</span></li><li><span>✓</span> <span data-landing="tpoItem2">No student payment data, ever</span></li><li><span>✓</span> <span data-landing="tpoItem3">Monthly progress summaries</span></li></ul><button class="button button-lime" data-open-modal="tpo"><span data-landing="tpoCta">Get your TPO workspace</span> <span>→</span></button></div>
           <div class="tpo-dashboard">
             <div class="dash-top"><div><small>GOOD MORNING,</small><strong>VIT Vellore · TPO</strong></div><span class="dash-avatar">TP</span></div>
             <div class="dash-title"><div><h3>Cohort overview</h3><small>September 2026</small></div><span class="report-pill">↓ Download report</span></div>
@@ -144,21 +144,21 @@
       </section>
 
       <section class="faq-section section-wrap">
-        <div class="faq-heading"><div class="section-label"><span>06</span> GOOD QUESTIONS</div><h2>A little more<br /><em>clarity.</em></h2></div>
+        <div class="faq-heading"><div class="section-label"><span>06</span> <span data-landing="faqLabel">GOOD QUESTIONS</span></div><h2 id="landingFaqTitle">A little more<br /><em>clarity.</em></h2></div>
         <div class="faq-list">
-          <details open><summary>Who are Gradflow courses for?<span>+</span></summary><p>Gradflow is designed for final-year students and recent graduates who want to move from learning to doing. You don’t need prior experience—just curiosity and the commitment to build.</p></details>
-          <details><summary>How are the courses taught?<span>+</span></summary><p>Each pathway combines short tool lessons, guided project sprints, feedback from practitioners and career-ready templates you can keep using.</p></details>
-          <details><summary>Will I get a certificate?<span>+</span></summary><p>Yes. More importantly, you’ll have a verified project portfolio and completion record that shows what you learned and built.</p></details>
-          <details><summary>What does the TPO workspace include?<span>+</span></summary><p>TPOs get a free cohort view of enrollment, active learning, project submissions and career-readiness trends. Student payment details are never visible.</p></details>
+          <details open><summary><span data-landing="faq1Question">Who are Gradflow courses for?</span><span>+</span></summary><p data-landing="faq1Answer">Gradflow is designed for final-year students and recent graduates who want to move from learning to doing. You don’t need prior experience—just curiosity and the commitment to build.</p></details>
+          <details><summary><span data-landing="faq2Question">How are the courses taught?</span><span>+</span></summary><p data-landing="faq2Answer">Each pathway combines short tool lessons, guided project sprints, feedback from practitioners and career-ready templates you can keep using.</p></details>
+          <details><summary><span data-landing="faq3Question">Will I get a certificate?</span><span>+</span></summary><p data-landing="faq3Answer">Yes. More importantly, you’ll have a verified project portfolio and completion record that shows what you learned and built.</p></details>
+          <details><summary><span data-landing="faq4Question">What does the TPO workspace include?</span><span>+</span></summary><p data-landing="faq4Answer">TPOs get a free cohort view of enrollment, active learning, project submissions and career-readiness trends. Student payment details are never visible.</p></details>
         </div>
       </section>
 
-      <section class="cta-section section-wrap"><div class="cta-card"><span class="cta-spark">✦</span><div><p>YOUR CAREER, IN MOTION</p><h2>You’re closer than<br />you <em>think.</em></h2></div><button class="button button-lime" data-scroll="#courses">Start building today <span>→</span></button><div class="cta-lines"></div></div></section>
+      <section class="cta-section section-wrap"><div class="cta-card"><span class="cta-spark">✦</span><div><p data-landing="ctaEyebrow">YOUR CAREER, IN MOTION</p><h2 id="landingCtaTitle">You’re closer than<br />you <em>think.</em></h2></div><button class="button button-lime" data-scroll="#courses"><span data-landing="ctaButton">Start building today</span> <span>→</span></button><div class="cta-lines"></div></div></section>
     </main>
 
     <footer>
-      <div class="section-wrap footer-grid"><div><a href="#top" class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>gradflow<span class="period">.</span></span></a><p>From campus to career,<br />with proof.</p></div><div class="footer-links"><div><strong>EXPLORE</strong><a href="#courses">Learning paths</a><a href="#courses">Course access</a><a href="#stories">Student stories</a></div><div><strong>FOR PARTNERS</strong><a href="#tpo">For TPOs</a><a href="tpo.html">TPO workspace</a><a href="admin/">Admin portal</a><a href="mailto:hello@gradflow.in">Talk to us</a></div><div><strong>FOLLOW</strong><a href="#top">LinkedIn ↗</a><a href="#top">Instagram ↗</a><a href="#top">YouTube ↗</a></div></div></div>
-      <div class="section-wrap footer-bottom"><span>© 2026 Gradflow Learning Pvt. Ltd.</span><div><a href="#top">Privacy</a><a href="#top">Terms</a></div><span>Made for the next move <i>✦</i></span></div>
+      <div class="section-wrap footer-grid"><div><a href="#top" class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>gradflow<span class="period">.</span></span></a><p data-landing="footerTagline">From campus to career,<br />with proof.</p></div><div class="footer-links"><div><strong>EXPLORE</strong><a href="#courses">Learning paths</a><a href="#courses">Course access</a><a href="#stories">Student stories</a></div><div><strong>FOR PARTNERS</strong><a href="#tpo">For TPOs</a><a href="tpo.html">TPO workspace</a><a href="admin/">Admin portal</a><a href="mailto:hello@gradflow.in">Talk to us</a></div><div><strong>FOLLOW</strong><a href="#top">LinkedIn ↗</a><a href="#top">Instagram ↗</a><a href="#top">YouTube ↗</a></div></div></div>
+      <div class="section-wrap footer-bottom"><span>© 2026 Gradflow Learning Pvt. Ltd.</span><div><a href="#top">Privacy</a><a href="#top">Terms</a></div><span><span data-landing="footerNote">Made for the next move</span> <i>✦</i></span></div>
     </footer>
 
     <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">

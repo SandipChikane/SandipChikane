@@ -197,6 +197,7 @@ async function render() {
   if (view.name === 'colleges') return renderColleges();
   if (view.name === 'referrals') return renderReferrals();
   if (view.name === 'withdrawals') return renderWithdrawals();
+  if (view.name === 'landing') return renderLanding();
   if (view.name === 'settings') return renderSettings();
   if (view.name === 'audit') return renderAudit();
   return renderOverview();
@@ -339,7 +340,7 @@ async function renderCourses() {
 }
 
 function blankLesson() {
-  return { title: '', type: 'LESSON', minutes: 20, copy: '', isCurrent: false };
+  return { title: '', type: 'LESSON', minutes: 20, copy: '', allowDownload: false, isCurrent: false };
 }
 
 function blankModule(index = 0) {
@@ -748,6 +749,12 @@ function lessonFields(lesson, sectionIndex, moduleIndex, lessonIndex) {
       <label class="admin-drop">Upload lesson image<input type="file" accept="image/*" data-lesson-upload="${sectionIndex}:${moduleIndex}:${lessonIndex}:imageUrl"></label>
       <label>Resource URL<input name="lesson-resource-${sectionIndex}-${moduleIndex}-${lessonIndex}" value="${escapeHtml(lesson.resourceUrl || '')}"></label>
       <label>Resource label<input name="lesson-resource-label-${sectionIndex}-${moduleIndex}-${lessonIndex}" value="${escapeHtml(lesson.resourceLabel || '')}"></label>
+      <label>Allow student download
+        <select name="lesson-download-${sectionIndex}-${moduleIndex}-${lessonIndex}">
+          <option value="false" ${!lesson.allowDownload ? 'selected' : ''}>No</option>
+          <option value="true" ${lesson.allowDownload ? 'selected' : ''}>Yes</option>
+        </select>
+      </label>
       ${lesson.videoUrl ? `<div class="admin-preview"><video src="${escapeHtml(lesson.videoUrl)}" controls></video></div>` : ''}
     </div>`;
 }
@@ -969,6 +976,7 @@ function syncEditorForm() {
         imageUrl: String(data.get(`lesson-image-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || lesson.imageUrl || ''),
         resourceUrl: String(data.get(`lesson-resource-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || ''),
         resourceLabel: String(data.get(`lesson-resource-label-${sectionIndex}-${moduleIndex}-${lessonIndex}`) || ''),
+        allowDownload: data.get(`lesson-download-${sectionIndex}-${moduleIndex}-${lessonIndex}`) === 'true',
       })),
     })),
   }));
@@ -1195,6 +1203,172 @@ async function renderColleges() {
     </div>`;
 }
 
+function landingInput(name, label, value, textarea = false) {
+  if (textarea) {
+    return `<label class="wide">${label}<textarea name="${name}">${escapeHtml(value || '')}</textarea></label>`;
+  }
+  return `<label>${label}<input name="${name}" value="${escapeHtml(value || '')}"></label>`;
+}
+
+function landingHeading(prefix, label, landing) {
+  return `
+    <p class="mini-eyebrow">${label}</p>
+    <div class="admin-form-grid">
+      ${landingInput(`${prefix}Before`, 'Title before highlight (new line = line break)', landing[`${prefix}Before`], true)}
+      ${landingInput(`${prefix}Em`, 'Highlighted word', landing[`${prefix}Em`])}
+      ${landingInput(`${prefix}After`, 'Title after highlight', landing[`${prefix}After`], true)}
+    </div>`;
+}
+
+async function renderLanding() {
+  const data = await api('/api/admin/landing');
+  const landing = data.landing || {};
+  content.innerHTML = `
+    <form class="admin-form" id="landingForm">
+      <div class="admin-toolbar">
+        <div>
+          <p class="dashboard-eyebrow">PUBLIC SITE</p>
+          <h1>Landing <em>copy.</em></h1>
+        </div>
+        <a class="button button-dark button-sm" href="/" target="_blank" rel="noreferrer">View landing</a>
+      </div>
+      <p class="admin-builder-copy">Write the public homepage here. Layout, illustrations, and the published course grid stay as they are. Empty fields keep the Gradflow default so the page never goes blank. Use a new line where a heading should break.</p>
+      <section class="admin-section">
+        <p class="mini-eyebrow">BANNER &amp; TAB</p>
+        <div class="admin-form-grid">
+          ${landingInput('pageTitle', 'Browser tab title', landing.pageTitle)}
+          ${landingInput('announcement', 'Announcement banner', landing.announcement, true)}
+        </div>
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">HERO</p>
+        ${landingInput('heroEyebrow', 'Eyebrow', landing.heroEyebrow)}
+        ${landingHeading('heroTitle', 'HERO TITLE', landing)}
+        ${landingInput('heroLede', 'Lead paragraph', landing.heroLede, true)}
+        <div class="admin-form-grid">
+          ${landingInput('heroCta', 'Primary button', landing.heroCta)}
+          ${landingInput('heroVideoCta', 'Video button', landing.heroVideoCta)}
+          ${landingInput('heroProofStat', 'Proof stat', landing.heroProofStat)}
+          ${landingInput('heroProofSub', 'Proof subcopy', landing.heroProofSub)}
+        </div>
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">CAMPUSES</p>
+        ${landingInput('marqueeLabel', 'Marquee label', landing.marqueeLabel)}
+        ${landingInput('marqueeItems', 'Campus names (comma separated)', Array.isArray(landing.marqueeItems) ? landing.marqueeItems.join(', ') : landing.marqueeItems)}
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">HOW IT WORKS</p>
+        ${landingInput('introLabel', 'Section label', landing.introLabel)}
+        ${landingHeading('introTitle', 'INTRO TITLE', landing)}
+        ${landingInput('introCopy', 'Intro copy', landing.introCopy, true)}
+        ${landingInput('introLink', 'Intro link', landing.introLink)}
+        <div class="admin-form-grid">
+          ${landingInput('principle1Title', 'Principle 1 title', landing.principle1Title)}
+          ${landingInput('principle1Copy', 'Principle 1 copy', landing.principle1Copy, true)}
+          ${landingInput('principle2Title', 'Principle 2 title', landing.principle2Title)}
+          ${landingInput('principle2Copy', 'Principle 2 copy', landing.principle2Copy, true)}
+          ${landingInput('principle3Title', 'Principle 3 title', landing.principle3Title)}
+          ${landingInput('principle3Copy', 'Principle 3 copy', landing.principle3Copy, true)}
+        </div>
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">COURSES</p>
+        ${landingInput('coursesLabel', 'Section label', landing.coursesLabel)}
+        ${landingHeading('coursesTitle', 'COURSES TITLE', landing)}
+        ${landingInput('coursesIntro', 'Courses intro', landing.coursesIntro, true)}
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">PORTFOLIO</p>
+        ${landingInput('showcaseLabel', 'Section label', landing.showcaseLabel)}
+        ${landingHeading('showcaseTitle', 'SHOWCASE TITLE', landing)}
+        ${landingInput('showcaseIntro', 'Showcase intro', landing.showcaseIntro, true)}
+        ${landingInput('showcaseNote', 'Side note', landing.showcaseNote, true)}
+        <div class="admin-form-grid">
+          ${landingInput('showcaseStat1Value', 'Stat 1 value', landing.showcaseStat1Value)}
+          ${landingInput('showcaseStat1Label', 'Stat 1 label', landing.showcaseStat1Label)}
+          ${landingInput('showcaseStat2Value', 'Stat 2 value', landing.showcaseStat2Value)}
+          ${landingInput('showcaseStat2Label', 'Stat 2 label', landing.showcaseStat2Label)}
+          ${landingInput('showcaseCta', 'Showcase button', landing.showcaseCta)}
+        </div>
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">OUTCOMES</p>
+        ${landingInput('outcomesLabel', 'Section label', landing.outcomesLabel)}
+        ${landingHeading('outcomesTitle', 'OUTCOMES TITLE', landing)}
+        ${landingInput('outcomesCopy', 'Outcomes copy', landing.outcomesCopy, true)}
+        <div class="admin-form-grid">
+          ${landingInput('outcome1Value', 'Outcome 1 value', landing.outcome1Value)}
+          ${landingInput('outcome1Label', 'Outcome 1 label', landing.outcome1Label, true)}
+          ${landingInput('outcome2Value', 'Outcome 2 value', landing.outcome2Value)}
+          ${landingInput('outcome2Label', 'Outcome 2 label', landing.outcome2Label, true)}
+          ${landingInput('outcome3Value', 'Outcome 3 value', landing.outcome3Value)}
+          ${landingInput('outcome3Label', 'Outcome 3 label', landing.outcome3Label, true)}
+          ${landingInput('outcomesLink', 'Outcomes link', landing.outcomesLink)}
+        </div>
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">STORIES</p>
+        ${landingInput('storiesLabel', 'Section label', landing.storiesLabel)}
+        ${landingHeading('storiesTitle', 'STORIES TITLE', landing)}
+        ${landingInput('story1Quote', 'Story 1 quote', landing.story1Quote, true)}
+        <div class="admin-form-grid">
+          ${landingInput('story1Name', 'Story 1 name', landing.story1Name)}
+          ${landingInput('story1Role', 'Story 1 role', landing.story1Role)}
+          ${landingInput('story1Course', 'Story 1 course tag', landing.story1Course)}
+        </div>
+        ${landingInput('story2Quote', 'Story 2 quote', landing.story2Quote, true)}
+        <div class="admin-form-grid">
+          ${landingInput('story2Name', 'Story 2 name', landing.story2Name)}
+          ${landingInput('story2Role', 'Story 2 role', landing.story2Role)}
+        </div>
+        ${landingInput('story3Quote', 'Story 3 quote', landing.story3Quote, true)}
+        <div class="admin-form-grid">
+          ${landingInput('story3Name', 'Story 3 name', landing.story3Name)}
+          ${landingInput('story3Role', 'Story 3 role', landing.story3Role)}
+        </div>
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">TPO</p>
+        ${landingInput('tpoEyebrow', 'TPO eyebrow', landing.tpoEyebrow)}
+        ${landingHeading('tpoTitle', 'TPO TITLE', landing)}
+        ${landingInput('tpoCopy', 'TPO copy', landing.tpoCopy, true)}
+        ${landingInput('tpoItem1', 'Checklist 1', landing.tpoItem1)}
+        ${landingInput('tpoItem2', 'Checklist 2', landing.tpoItem2)}
+        ${landingInput('tpoItem3', 'Checklist 3', landing.tpoItem3)}
+        ${landingInput('tpoCta', 'TPO button', landing.tpoCta)}
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">FAQ</p>
+        ${landingInput('faqLabel', 'Section label', landing.faqLabel)}
+        ${landingHeading('faqTitle', 'FAQ TITLE', landing)}
+        ${landingInput('faq1Question', 'Question 1', landing.faq1Question)}
+        ${landingInput('faq1Answer', 'Answer 1', landing.faq1Answer, true)}
+        ${landingInput('faq2Question', 'Question 2', landing.faq2Question)}
+        ${landingInput('faq2Answer', 'Answer 2', landing.faq2Answer, true)}
+        ${landingInput('faq3Question', 'Question 3', landing.faq3Question)}
+        ${landingInput('faq3Answer', 'Answer 3', landing.faq3Answer, true)}
+        ${landingInput('faq4Question', 'Question 4', landing.faq4Question)}
+        ${landingInput('faq4Answer', 'Answer 4', landing.faq4Answer, true)}
+      </section>
+      <section class="admin-section">
+        <p class="mini-eyebrow">CLOSE</p>
+        ${landingInput('ctaEyebrow', 'CTA eyebrow', landing.ctaEyebrow)}
+        ${landingHeading('ctaTitle', 'CTA TITLE', landing)}
+        ${landingInput('ctaButton', 'CTA button', landing.ctaButton)}
+        ${landingInput('footerTagline', 'Footer tagline', landing.footerTagline, true)}
+        ${landingInput('footerNote', 'Footer note', landing.footerNote)}
+      </section>
+      <button class="button button-lime" type="submit">Save landing copy</button>
+    </form>`;
+  document.getElementById('landingForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const payload = Object.fromEntries(new FormData(event.target).entries());
+    await api('/api/admin/landing', { method: 'POST', body: payload });
+    showToast('Landing saved.', 'The public homepage will show this copy.');
+  });
+}
+
 async function renderSettings() {
   const data = await api('/api/admin/settings');
   const settings = data.settings || {};
@@ -1203,7 +1377,7 @@ async function renderSettings() {
       <div class="admin-toolbar"><div><p class="dashboard-eyebrow">SITE</p><h1>Workspace <em>settings.</em></h1></div></div>
       <label>Support email<input name="supportEmail" type="email" value="${escapeHtml(settings.supportEmail || '')}"></label>
       <label>Checkout display name<input name="checkoutName" value="${escapeHtml(settings.checkoutName || 'Gradflow')}"></label>
-      <label class="wide">Announcement banner<input name="announcement" value="${escapeHtml(settings.announcement || '')}" placeholder="Shown on the public landing page"></label>
+      <label class="wide">Announcement banner<input name="announcement" value="${escapeHtml(settings.announcement || '')}" placeholder="Shown on the public landing page. The full homepage copy lives under Landing."></label>
       <section class="admin-section">
         <p class="mini-eyebrow">REFERRAL PROGRAM</p>
         <h2>Referral <em>operations.</em></h2>

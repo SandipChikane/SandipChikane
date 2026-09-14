@@ -236,7 +236,72 @@ function renderLandingCourses() {
 
 syncAccessPills();
 
+function applyLandingText(node, value) {
+  if (!node || value == null || value === '') return;
+  const parts = String(value).split('\n');
+  node.replaceChildren();
+  parts.forEach((part, index) => {
+    if (index) node.appendChild(document.createElement('br'));
+    if (part) node.appendChild(document.createTextNode(part));
+  });
+}
+
+function applyLandingHeading(id, before, em, after) {
+  const node = document.getElementById(id);
+  if (!node) return;
+  node.replaceChildren();
+  applyLandingFragment(node, before);
+  if (em) {
+    const emphasis = document.createElement('em');
+    emphasis.textContent = em;
+    node.appendChild(emphasis);
+  }
+  applyLandingFragment(node, after);
+}
+
+function applyLandingFragment(node, value) {
+  String(value || '').split('\n').forEach((part, index) => {
+    if (index) node.appendChild(document.createElement('br'));
+    if (part) node.appendChild(document.createTextNode(part));
+  });
+}
+
+function applyLandingMarquee(items) {
+  const track = document.getElementById('landingMarquee');
+  if (!track || !Array.isArray(items) || !items.length) return;
+  const loop = items.length < 6 ? [...items, ...items] : items;
+  track.replaceChildren();
+  loop.forEach((item, index) => {
+    const span = document.createElement('span');
+    span.textContent = item;
+    track.appendChild(span);
+    if (index < loop.length - 1) track.appendChild(document.createElement('i'));
+  });
+}
+
+function applyLanding(landing) {
+  if (!landing) return;
+  if (landing.pageTitle) document.title = landing.pageTitle;
+  document.querySelectorAll('[data-landing]').forEach((node) => {
+    const key = node.getAttribute('data-landing');
+    if (key && landing[key] != null && landing[key] !== '') applyLandingText(node, landing[key]);
+  });
+  applyLandingHeading('landingHeroTitle', landing.heroTitleBefore, landing.heroTitleEm, landing.heroTitleAfter);
+  applyLandingHeading('landingIntroTitle', landing.introTitleBefore, landing.introTitleEm, landing.introTitleAfter);
+  applyLandingHeading('landingCoursesTitle', landing.coursesTitleBefore, landing.coursesTitleEm, landing.coursesTitleAfter);
+  applyLandingHeading('landingShowcaseTitle', landing.showcaseTitleBefore, landing.showcaseTitleEm, landing.showcaseTitleAfter);
+  applyLandingHeading('landingOutcomesTitle', landing.outcomesTitleBefore, landing.outcomesTitleEm, landing.outcomesTitleAfter);
+  applyLandingHeading('landingStoriesTitle', landing.storiesTitleBefore, landing.storiesTitleEm, landing.storiesTitleAfter);
+  applyLandingHeading('landingTpoTitle', landing.tpoTitleBefore, landing.tpoTitleEm, landing.tpoTitleAfter);
+  applyLandingHeading('landingFaqTitle', landing.faqTitleBefore, landing.faqTitleEm, landing.faqTitleAfter);
+  applyLandingHeading('landingCtaTitle', landing.ctaTitleBefore, landing.ctaTitleEm, landing.ctaTitleAfter);
+  applyLandingMarquee(landing.marqueeItems);
+  const announcement = document.getElementById('announcementCopy');
+  if (announcement && landing.announcement) announcement.textContent = landing.announcement;
+}
+
 window.GradflowEnrollment.publicConfig?.().then((config) => {
+  applyLanding(config?.landing);
   const copy = document.getElementById('announcementCopy');
   if (copy && config?.announcement) copy.textContent = config.announcement;
 });

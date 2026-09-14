@@ -4,6 +4,7 @@ import { createAdminHandlers, adminEnrollment } from '../lib/admin-handlers.mjs'
 import { emailsMatch, passwordsMatch, signSession, verifyAdminSecret } from '../lib/admin-auth.mjs';
 import { hashPassword } from '../lib/access-auth.mjs';
 import { seedPayloadFromCatalog, toAdminCourse, toPublicCourse, toStudentCourse, unwrapSetting } from '../lib/cms.mjs';
+import { withStudentMediaProxy } from '../lib/student-media.mjs';
 import { publicEnrollment } from '../lib/supabase.mjs';
 import { SEED_COURSES } from '../lib/seed-courses.mjs';
 
@@ -101,6 +102,44 @@ describe('cms mapping', () => {
     assert.equal(JSON.stringify(studentCourse).includes('example.com/lesson.mp4'), false);
     assert.equal(adminCourse.lesson.videoUrl, 'https://example.com/lesson.mp4');
     assert.equal(studentCourse.sections[0].modules[0].lessons[0].videoUrl.includes('lesson-media'), true);
+    assert.equal(adminCourse.lesson.allowDownload, false);
+    assert.equal(studentCourse.lesson.allowDownload, false);
+  });
+
+  it('exposes student downloads only when a lesson allows them', () => {
+    const row = {
+      id: 'demo-lab',
+      name: 'Demo Lab',
+      category: 'tech',
+      weeks: 4,
+      price: 1999,
+      blurb: 'A short path.',
+      tools: ['SQL'],
+      project: 'Lab brief',
+      status: 'published',
+      featured: false,
+      sort_order: 1,
+    };
+    const lessons = [{
+      id: 'l1',
+      module_id: 'm1',
+      title: 'Pack',
+      allow_download: true,
+      resource_url: 'https://example.com/pack.zip',
+      resource_label: 'Pack',
+      is_current: true,
+    }];
+    const studentCourse = toStudentCourse(row, [{ id: 'm1', title: 'Start' }], lessons);
+    assert.equal(studentCourse.lesson.allowDownload, true);
+    assert.match(studentCourse.lesson.resourceUrl, /kind=resource/);
+    assert.equal(studentCourse.lesson.resourceDownloadable, true);
+    assert.equal(JSON.stringify(studentCourse).includes('example.com/pack.zip'), false);
+    const proxied = withStudentMediaProxy(toAdminCourse(row, [{ id: 'm1', title: 'Start' }], [{
+      ...lessons[0],
+      allow_download: false,
+    }]));
+    assert.equal(proxied.lesson.resourceBlocked, true);
+    assert.equal(proxied.lesson.resourceUrl, '');
   });
 
   it('seeds every built-in course as published', () => {
