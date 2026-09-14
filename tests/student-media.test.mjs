@@ -61,7 +61,7 @@ describe('student media protection', () => {
     assert.equal(result.error.status, 403);
   });
 
-  it('streams lesson video inline and ignores download=1', async () => {
+  it('streams lesson video inline and ignores download=1 when downloads are off', async () => {
     const bytes = Buffer.from('fake-mp4');
     const result = await serveLessonMedia({
       req: adminReq(),
@@ -112,10 +112,43 @@ describe('student media protection', () => {
     assert.equal(Object.values(headers).some((value) => String(value).includes('attachment')), false);
   });
 
-  it('removes download controls from the student course player', () => {
+  it('keeps download controls off by default and shows them when admin enables a lesson', () => {
     const source = readFileSync(path.join(ROOT, 'course.js'), 'utf8');
-    assert.match(source, /controlsList = 'nodownload/);
-    assert.equal(source.includes('Download resource'), false);
+    assert.match(source, /controlsList = allowDownload \? 'noremoteplayback' : 'nodownload noremoteplayback'/);
+    assert.match(source, /Download resource/);
     assert.match(source, /View in the browser/);
+    const admin = readFileSync(path.join(ROOT, 'admin/admin.js'), 'utf8');
+    assert.match(admin, /lesson-download-/);
+    assert.match(admin, /Allow student download/);
+  });
+
+  it('serves an attachment when the lesson allows downloads', async () => {
+    const bytes = Buffer.from('pack-bytes');
+    const result = await serveLessonMedia({
+      req: adminReq(),
+      query: { course: 'lab', kind: 'resource', download: '1' },
+      env,
+      status: 'published',
+      course: {
+        id: 'lab',
+        lesson: {
+          resourceUrl: 'https://cdn.example.com/pack.zip',
+          resourceLabel: 'Pack',
+          allowDownload: true,
+        },
+        lessons: [{
+          id: 'l1',
+          isCurrent: true,
+          resourceUrl: 'https://cdn.example.com/pack.zip',
+          allowDownload: true,
+        }],
+      },
+      fetchImpl: async () => new Response(bytes, {
+        status: 200,
+        headers: { 'Content-Type': 'application/zip', 'Content-Length': String(bytes.length) },
+      }),
+    });
+    assert.equal(result.status, 200);
+    assert.match(result.headers['Content-Disposition'], /attachment; filename="pack.zip"/);
   });
 });

@@ -124,7 +124,7 @@ function renderUnlocked() {
 
   bindUnlockedActions();
   if (lesson) {
-    fillMedia('lessonMedia', lesson.videoUrl, lesson.imageUrl);
+    fillMedia('lessonMedia', lesson.videoUrl, lesson.imageUrl, lesson.allowDownload);
     renderLessonResource(lesson);
   }
   lockedState.hidden = true;
@@ -408,17 +408,33 @@ async function finishEnrollment(record) {
   unlockedState.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function protectMedia(element) {
+function protectMedia(element, allowDownload = false) {
   if (!element) return element;
-  element.controlsList = 'nodownload noremoteplayback';
+  element.controlsList = allowDownload ? 'noremoteplayback' : 'nodownload noremoteplayback';
   element.disablePictureInPicture = true;
-  element.setAttribute('controlsList', 'nodownload noremoteplayback');
+  element.setAttribute('controlsList', element.controlsList);
   element.setAttribute('disablePictureInPicture', '');
-  element.setAttribute('controlslist', 'nodownload noremoteplayback');
+  element.setAttribute('controlslist', element.controlsList);
   element.draggable = false;
-  element.addEventListener('contextmenu', (event) => event.preventDefault());
-  element.addEventListener('dragstart', (event) => event.preventDefault());
+  if (!allowDownload) {
+    element.addEventListener('contextmenu', (event) => event.preventDefault());
+    element.addEventListener('dragstart', (event) => event.preventDefault());
+  }
   return element;
+}
+
+function withDownloadParam(url) {
+  const parsed = new URL(url, window.location.origin);
+  parsed.searchParams.set('download', '1');
+  return `${parsed.pathname}${parsed.search}`;
+}
+
+function downloadLink(url, label) {
+  const link = document.createElement('a');
+  link.className = 'arrow-link';
+  link.href = withDownloadParam(url);
+  link.textContent = `${label} →`;
+  return link;
 }
 
 function renderLessonResource(lesson = {}) {
@@ -427,19 +443,27 @@ function renderLessonResource(lesson = {}) {
   resource.replaceChildren();
   if (lesson.resourceUrl) {
     const card = document.createElement('div');
-    card.className = 'resource-card';
-    const button = document.createElement('button');
-    button.className = 'arrow-link';
-    button.type = 'button';
-    button.textContent = `${lesson.resourceLabel || 'Open resource'} →`;
-    const frame = document.createElement('div');
-    frame.className = 'resource-frame';
-    frame.hidden = true;
-    button.addEventListener('click', () => openProtectedResource(frame, lesson.resourceUrl));
+    card.className = lesson.allowDownload ? 'resource-card downloads-on' : 'resource-card';
+    if (lesson.resourceViewable !== false) {
+      const button = document.createElement('button');
+      button.className = 'arrow-link';
+      button.type = 'button';
+      button.textContent = `${lesson.resourceLabel || 'Open resource'} →`;
+      const frame = document.createElement('div');
+      frame.className = lesson.allowDownload ? 'resource-frame downloads-on' : 'resource-frame';
+      frame.hidden = true;
+      button.addEventListener('click', () => openProtectedResource(frame, lesson.resourceUrl, lesson.allowDownload));
+      card.append(button, frame);
+    }
+    if (lesson.allowDownload) {
+      card.appendChild(downloadLink(lesson.resourceUrl, 'Download resource'));
+    }
     const note = document.createElement('p');
     note.className = 'resource-note';
-    note.textContent = 'View in the browser. Downloads are turned off.';
-    card.append(button, frame, note);
+    note.textContent = lesson.allowDownload
+      ? 'You can save this file. Admin enabled downloads for this lesson.'
+      : 'View in the browser. Downloads are turned off.';
+    card.appendChild(note);
     resource.appendChild(card);
     resource.hidden = false;
     return;
@@ -455,19 +479,20 @@ function renderLessonResource(lesson = {}) {
   resource.hidden = true;
 }
 
-function openProtectedResource(frame, url) {
+function openProtectedResource(frame, url, allowDownload = false) {
   frame.hidden = false;
   frame.replaceChildren();
+  if (allowDownload) frame.classList.add('downloads-on');
   const kind = new URL(url, window.location.origin).searchParams.get('kind');
   if (kind === 'image' || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(url)) {
-    const image = protectMedia(document.createElement('img'));
+    const image = protectMedia(document.createElement('img'), allowDownload);
     image.src = url;
     image.alt = 'Lesson resource';
     frame.appendChild(image);
     return;
   }
   if (kind === 'video' || /\.(mp4|webm|m4v|mov)(\?|$)/i.test(url)) {
-    const video = protectMedia(document.createElement('video'));
+    const video = protectMedia(document.createElement('video'), allowDownload);
     video.src = url;
     video.controls = true;
     video.playsInline = true;
@@ -479,29 +504,32 @@ function openProtectedResource(frame, url) {
   iframe.src = url;
   iframe.title = 'Lesson resource';
   iframe.setAttribute('referrerpolicy', 'no-referrer');
-  iframe.addEventListener('contextmenu', (event) => event.preventDefault());
+  if (!allowDownload) iframe.addEventListener('contextmenu', (event) => event.preventDefault());
   frame.appendChild(iframe);
 }
 
-function fillMedia(id, videoUrl, imageUrl) {
+function fillMedia(id, videoUrl, imageUrl, allowDownload = false) {
   const node = document.getElementById(id);
   if (!node) return;
   node.replaceChildren();
+  node.classList.toggle('downloads-on', Boolean(allowDownload));
   if (videoUrl) {
-    const video = protectMedia(document.createElement('video'));
+    const video = protectMedia(document.createElement('video'), allowDownload);
     video.src = videoUrl;
     video.controls = true;
     video.playsInline = true;
     video.preload = 'metadata';
     node.appendChild(video);
+    if (allowDownload) node.appendChild(downloadLink(videoUrl, 'Download video'));
     node.hidden = false;
     return;
   }
   if (imageUrl) {
-    const image = protectMedia(document.createElement('img'));
+    const image = protectMedia(document.createElement('img'), allowDownload);
     image.src = imageUrl;
     image.alt = '';
     node.appendChild(image);
+    if (allowDownload) node.appendChild(downloadLink(imageUrl, 'Download image'));
     node.hidden = false;
     return;
   }
@@ -677,7 +705,8 @@ document.getElementById('signInForm')?.addEventListener('submit', async (event) 
 });
 
 document.addEventListener('contextmenu', (event) => {
-  if (event.target.closest('.course-media, .resource-frame, .current-lesson video, .current-lesson img')) {
+  const media = event.target.closest('.course-media, .resource-frame, .current-lesson video, .current-lesson img');
+  if (media && !media.closest('.downloads-on') && !media.classList.contains('downloads-on')) {
     event.preventDefault();
   }
 });

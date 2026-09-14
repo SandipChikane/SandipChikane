@@ -49,6 +49,7 @@ create table if not exists public.course_lessons (
   image_url text,
   resource_url text,
   resource_label text,
+  allow_download boolean not null default false,
   is_current boolean not null default false,
   sort_order integer not null default 0
 );
